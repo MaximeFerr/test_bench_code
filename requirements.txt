@@ -1,0 +1,8 @@
+# Project requirements
+
+pyvisa
+matlplotlib
+numpy
+pyvia-py
+pyserial
+zeroconf
