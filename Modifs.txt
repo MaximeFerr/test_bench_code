@@ -1,0 +1,45 @@
+is >> ==
+
+Function InitOscillo
+> Pb Text= > supprimer
+
+Retirer les rm = visa.ResourceManager() et rm.close()
+
+DCSweepVoltageSource() >> DCSweepVoltageSource(Shield) 
+
+delay_com pas défini
+delay_com = 0.1 # For SPIN BOARD!!! pas défini
+
+Erreur en fin de script si pas de TRIGG sur les DMMS:
+Traceback (most recent call last):
+  File "C:\Users\rouger\SynologyDrive\2024-2025-DR2\Manipe\Hackathon\Session-Decembre2024\v2bis-CleanUPLuiz\test_bench_code-clean_upNew-v20dec\test_bench_code-clean_up\Supervisor_v1_4.py", line 831, in <module>
+    main()
+  File "C:\Users\rouger\SynologyDrive\2024-2025-DR2\Manipe\Hackathon\Session-Decembre2024\v2bis-CleanUPLuiz\test_bench_code-clean_upNew-v20dec\test_bench_code-clean_up\Supervisor_v1_4.py", line 770, in main
+    voltage = GetBuffer(DMM3065_voltage, wait_meas_complete=False)
+  File "C:\Users\rouger\SynologyDrive\2024-2025-DR2\Manipe\Hackathon\Session-Decembre2024\v2bis-CleanUPLuiz\test_bench_code-clean_upNew-v20dec\test_bench_code-clean_up\Supervisor_v1_4.py", line 317, in GetBuffer
+    digits = int(buffer_str[1])
+ValueError: invalid literal for int() with base 10: 'U'
+
+
+
+SweepPhaseShift(Board,PhaseInit,PhaseFinal,step)
+Board au lieu de Shield
+
+SweepPhaseShift(Board,PhaseInit,PhaseFinal,PhaseStep)
+PhaseStep au lieu de Step
+
+tmarkDMM
+> au lieu de tMarkVoltage, Current >>
+        # SAVE in CSV
+        ExportResultToCSV(voltage,tmarkDMM+'Voltage')
+        ExportResultToCSV(current,tmarkDMM+'Current')
+
+Function Oscillo v1b
+> Config Trigger EXT/5, supprimer HOLD OFF, et Trigg level 700mV
+
+
+Config > DMM modifié
+Numbre de SEquence pour oscillo à ajuster en fonction du nombre de pallier !!!
+
+Dans la capture des data oscillo > rajouter en nom le timestamp
+Rajouter en nom le timestamp sur les screenshot de chaque frame !!!

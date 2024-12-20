@@ -119,6 +119,7 @@ import lib.Oscillo_v1b as controloscillo
 delay = 0.1 #delay in seconds (100 ms)
 delay2 = 0.2 #delay in seconds (200 ms)
 delay3 = 0.2 #delay in seconds for cooldown during phase shift sweep
+delay_com = 0.1 # For SPIN BOARD!!!
 
 # PWM parameters
 DutyPWM = 0.485 # 48.5%   1 <> 100% duty. Must consider the deadtime and freq values for dead time compensation!
@@ -173,12 +174,12 @@ DMMforVoltage = 'SDM36HCX800421'
 # Oscillo manipe Opposition: 'USB0::0xF4EC::0x1011::SDS2PFFX801302::INSTR'
 AddressOSCILLO = 'USB0::0xF4EC::0x1011::SDS2PFFX801302::INSTR'
 #AddressOSCILLO = "USB0::0xF4EC::0x1011::SDS2PEEC6R0224::INSTR" 
-Sequence = '400' #400 ## At this moment, this is just a number value. No effect on scope
+Sequence = '16' #400 ## At this moment, this is just a number value. No effect on scope
 delayOscillo = 0.5
 
 # Used only for history. Not used here!
-SaveEachFramePICTURE = 0 #1 for YES, 0 for NO: to save each frame while reading history
-SaveEachFrameDATA = 0 #1 for YES, 0 for NO: to save each frame while reading history
+SaveEachFramePICTURE = 1 #1 for YES, 0 for NO: to save each frame while reading history
+SaveEachFrameDATA = 1 #1 for YES, 0 for NO: to save each frame while reading history
 
 
 
@@ -340,7 +341,7 @@ def ConfigForDCVoltageMeasureAndStoreBuffer(dmm, **config):
     cmd_buf.append(f'VOLT:DC:AZ {config.get("auto_zero", "OFF")}')
 
     if 'trig_delay' in config:
-        if config.get('trig_delay') is "AUTO":
+        if config.get('trig_delay')=="AUTO":
             cmd_buf.append('TRIG:DEL:AUTO 1')   # auto delay between trigger and each measurement
         else:
             cmd_buf.append(f'TRIG:DEL {config.get("trig_delay"):.4E}')   # delay in seconds
@@ -383,7 +384,7 @@ def ConfigForDCMeasure(dmm, measure_type: str = 'VOLT', **config):
     cmd_buf.append(f'SAMP:COUN {config.get("sample_count", "1")}')          # Number of measurement per trigger
 
     if 'trig_delay' in config:
-        if config.get('trig_delay') is "AUTO":
+        if config.get('trig_delay')=="AUTO":
             cmd_buf.append('TRIG:DEL:AUTO 1')   # auto delay between trigger and each measurement
         else:
             cmd_buf.append(f'TRIG:DEL {config.get("trig_delay"):.4E}')   # delay in seconds
@@ -556,7 +557,7 @@ def CheckCurrent(source):
     time.sleep(delay)
     
 
-def DCSweepVoltageSource():
+def DCSweepVoltageSource(Board):
     global rm
     #print(args)
 
@@ -576,9 +577,9 @@ def DCSweepVoltageSource():
     #VoltageRampUp(TDKLambda,VoltageWrite,timestep)
     VoltageRampUp(TDKLambda,VoltageWrite,timestep,voltage_step)
 
-    # SweepPhaseShift(Shield,PhaseInit,PhaseFinal,step) # SWEEP PHASE SHIFT of microcontroller
+    SweepPhaseShift(Board,PhaseInit,PhaseFinal,PhaseStep) # SWEEP PHASE SHIFT of microcontroller
 
-    SweepDutyShift(Shield,DutyInit,DutyFinal,DutyStep) # SWEEP PHASE SHIFT of microcontroller
+    #SweepDutyShift(Board,DutyInit,DutyFinal,DutyStep) # SWEEP PHASE SHIFT of microcontroller
 
     #VoltageRampUpAndSweepDuty(TDKLambda,VoltageWrite,timestep,voltage_step,Shield,DutyInit,DutyFinal,DutyStep)
     time.sleep(delay)
@@ -611,40 +612,39 @@ def DCSweepVoltageSource():
 # PART 7: Functions for Oscilloscope
 # -------------------------------------------------
 def InitOscillo():
-    Text=SaveFileName.get()
-    rm = visa.ResourceManager()
+    #rm = visa.ResourceManager()
     OSCILLO = rm.open_resource(AddressOSCILLO, query_delay=0.5)
     controloscillo.ConfigTrigger(OSCILLO,Sequence)
-    rm.close()
+    #rm.close()
 
  
 def SavePicture(Name):
-    rm = visa.ResourceManager()
+    #rm = visa.ResourceManager()
     OSCILLO = rm.open_resource(AddressOSCILLO, query_delay=0.5)
     controloscillo.GETPicture(OSCILLO,Name)
-    rm.close()
+    #rm.close()
 
 def ReadHistoryOnly():
-    rm = visa.ResourceManager()
+    #rm = visa.ResourceManager()
     OSCILLO = rm.open_resource(AddressOSCILLO, query_delay=0.5)
     controloscillo.ReadHistory(OSCILLO,Sequence,0,0,delayOscillo)
-    rm.close()
+    #rm.close()
 
 def ReadHistoryAndChooseToSave():
-    rm = visa.ResourceManager()
+    #rm = visa.ResourceManager()
     OSCILLO = rm.open_resource(AddressOSCILLO, query_delay=0.5)
     controloscillo.ReadHistory(OSCILLO,Sequence,SaveEachFramePICTURE,SaveEachFrameDATA,delayOscillo)
-    rm.close()
+    #rm.close()
 
 
 
 #-- Functions that can be useful, but not used:
 def SaveData(channel,Name):
     print("Channel: "+channel)
-    rm = visa.ResourceManager()
+    #rm = visa.ResourceManager()
     OSCILLO = rm.open_resource(AddressOSCILLO, query_delay=0.5)
     controloscillo.SaveDataOscillo(OSCILLO,channel,Name)
-    rm.close()
+    #rm.close()
 
 def SaveDataAllChannels():
     print('Fetch all channels')
@@ -738,9 +738,9 @@ def main():
         # maximum 20 measured points, 150us delay before measurement
         # and NPLC = 1 (20ms)
         ConfigForDCMeasure(DMM3065_current, measure_type='current', range=0.2, trig_source='EXT',
-                           trig_count=20, trig_delay=150e-6, nplc=1, sample_count=5)
+                           trig_count=20, trig_delay=1e-3, nplc=1, sample_count=3)
         ConfigForDCMeasure(DMM3065_voltage,  measure_type='voltage', range=60, trig_source='EXT',
-                           trig_count=20, trig_delay=150e-6, nplc=1, sample_count=5)
+                           trig_count=20, trig_delay=1e-3, nplc=1, sample_count=3)
 
         DMM3065_current.write('INITiate')
         DMM3065_voltage.write('INITiate')
@@ -753,7 +753,7 @@ def main():
         #time.sleep(1)
 
         # Start DC Voltage SWEEP
-        DCSweepVoltageSource()
+        DCSweepVoltageSource(Shield)
 
         # Return to init Phase
         message1 = Shield.sendCommand("PHASE_SHIFT", "LEG2", InitialPhaseShiftPWM)
@@ -771,11 +771,11 @@ def main():
         current = GetBuffer(DMM3065_current, wait_meas_complete=False)
 
         # SAVE in CSV
-        ExportResultToCSV(voltage,tmarkVoltage+'Voltage')
-        ExportResultToCSV(current,tmarkCurrent+'Current')
+        ExportResultToCSV(str(voltage),tmarkDMM+'Voltage')
+        ExportResultToCSV(str(current),tmarkDMM+'Current')
 
         # Save Global Picture of oscillo
-        SavePicture(tmarkCurrent+'-GlobalPicture')
+        SavePicture(tmarkDMM+'-GlobalPicture')
 
         # Read Oscillo History (No SAVE!!!)
         #ReadHistoryOnly()
@@ -828,7 +828,7 @@ if __name__ == "__main__":
 
     print(rm.list_resources())
     
-    # main()
+    main()
     # list_instruments()
 
     # dmm = openSiglentDMM('SDM36HCX800420')

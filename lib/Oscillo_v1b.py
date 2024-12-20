@@ -42,13 +42,13 @@ def PlotValues(data):
 def ConfigTrigger(smu,nbFrames):
     smu.write('TRIG:TYPE  EDGE ') # Edge
     smu.write(':TRIGger:EDGE:SLOPe  RISing') # Rising Edge
-    smu.write(':TRIGger:EDGE:HOLDoff  TIME') #HOLDoff with TIME
-    smu.write(':TRIGger:EDGE:HLDTime  50E-03') # HOLDoff TIME 50ms
-    smu.write(':TRIGger:EDGE:SOURce  C1') #Trigger Source C1
+    #smu.write(':TRIGger:EDGE:HOLDoff  TIME') #HOLDoff with TIME
+    #smu.write(':TRIGger:EDGE:HLDTime  50E-03') # HOLDoff TIME 50ms
+    #smu.write(':TRIGger:EDGE:SOURce  C1') #Trigger Source C1
     #smu.write(':TRIGger:EDGE:SOURce  EX') #Trigger Source External
-    #smu.write(':TRIGger:EDGE:SOURce  EX5') #Trigger Source External /5
+    smu.write(':TRIGger:EDGE:SOURce  EX5') #Trigger Source External /5
     #smu.write(':TRIGger:EDGE:LEVel  0.00E-01') #Trigger Level 0V
-    smu.write(':TRIGger:EDGE:LEVel  2.00E00') #Trigger Level 0V
+    smu.write(':TRIGger:EDGE:LEVel  7.00E-01') #Trigger Level 700mV
     smu.write(':ACQuire:SEQuence ON') #Segmented Memory ON
     #smu.write(':ACQuire:SEQuence:COUNt 200') # 200 Sequential Segments
     smu.write(':ACQuire:SEQuence:COUNt '+nbFrames) # 200 Sequential Segments
