@@ -94,8 +94,11 @@ class Supervisor:
         self.SaveEachFramePICTURE = self.config['SaveEachFramePICTURE']
         self.SaveEachFrameDATA = self.config['SaveEachFrameDATA']
 
-        self.shield_vid = self.config['shield_vid']
-        self.shield_pid = self.config['shield_pid']
+##        self.shield_vid = self.config['shield_vid']
+##        self.shield_pid = self.config['shield_pid']
+
+        self.microcontroller_vid = self.config['shield_vid']
+        self.microcontroller_pid = self.config['shield_pid']
 
 
         # 3. Create a single resource manager instance

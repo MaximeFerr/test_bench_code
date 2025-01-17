@@ -60,8 +60,8 @@ def main():
             "*RST",
             "CONF:CURR:DC AUTO",
             "TRIG:SOUR EXT",
-            "TRIG:COUN 1",
-            "SAMP:COUN 1",
+            "TRIG:COUN 7",
+            "SAMP:COUN 2",
             "CURR:DC:NPLC 1",
             "INITiate"
         ], delay=0.1)
@@ -69,8 +69,8 @@ def main():
             "*RST",
             "CONF:VOLT:DC AUTO",
             "TRIG:SOUR EXT",
-            "TRIG:COUN 1",
-            "SAMP:COUN 1",
+            "TRIG:COUN 7",
+            "SAMP:COUN 2",
             "VOLT:DC:NPLC 1",
             "INITiate"
         ], delay=0.1)
@@ -91,7 +91,7 @@ def main():
         print("Sweep phase done OK")
 
         # Ramp down
-        sup.power_supply_voltage_ramp_down(sup.VoltageWrite, -sup.voltage_step)
+        sup.power_supply_voltage_ramp_down(sup.VoltageWrite, -sup.voltage_step,-sup.voltage_step)
         print("Source ramped down OK")
 
         # Turn off power supply
@@ -105,7 +105,9 @@ def main():
         sup.microcontroller_send_command("LEG", "LEG2", "OFF")
 
         # Read data from the DMM buffers
+        time.sleep(1)
         voltage_data = sup.dmm_get_buffer(dmm_voltage, wait_meas_complete=False)
+        time.sleep(1)
         current_data = sup.dmm_get_buffer(dmm_current, wait_meas_complete=False)
 
         #######################################
