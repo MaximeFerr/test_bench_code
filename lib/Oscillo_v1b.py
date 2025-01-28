@@ -69,6 +69,7 @@ def GETPicture(smu,frame):
     f = open(file_name,'wb')
     f.write(result_str)
     f.flush()
+    time.sleep(1)
     file_name2 = ".\PictureInverted"+frame+".bmp"
     smu.write("PRIN? BMP,INVerted")
     result_str = smu.read_raw()
@@ -95,6 +96,7 @@ def ReadHistory(smu,nbFrames,SaveBitmap,SaveData,delay):
         time.sleep(delay)
         if (SaveBitmap==1):
             GETPicture(smu,frameString)
+            time.sleep(delay)
         if (SaveData==1):
             SaveDataOscillo(smu,'C1',frameString)
             #pl.figure(1)

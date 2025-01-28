@@ -65,7 +65,7 @@ DutyPWM = 0.485 # 48.5%   1 <> 100% duty. Must consider the deadtime and freq va
 frequencyPWM = 100e3 #100 kHz switching frequency
 DeadTimePWM = 300 #ns, deadtime
 InitialPhaseShiftPWM = 75 #0 or 15° initial & final phase shift between Leg1 and Leg2
-DeltaDutyInit = 0 # can be 0.01 for example
+DeltaDutyInit = 0. # can be 0.01 for example
 
 
 # CREATE ONLY A SINGLE RESOURCE MANAGER INSTANCE
