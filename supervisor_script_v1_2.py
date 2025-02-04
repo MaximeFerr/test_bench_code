@@ -74,8 +74,8 @@ def main():
             "CURR:DC:AZ OFF",
             #"CONF:CURR:DC AUTO",
             "TRIG:SOUR EXT;SLOP POS",
-            "TRIG:COUN 7",
-            "SAMP:COUN 8",
+            "TRIG:COUN 5",
+            "SAMP:COUN 7",
             "TRIG:DEL 100E-6",
             "CURR:DC:NPLC 1",
             "INITiate"
@@ -86,8 +86,8 @@ def main():
             "VOLT:DC:AZ OFF",
             #"CONF:VOLT:DC AUTO",
             "TRIG:SOUR EXT;SLOP POS",
-            "TRIG:COUN 7",
-            "SAMP:COUN 8",
+            "TRIG:COUN 5",
+            "SAMP:COUN 7",
             "TRIG:DEL 100E-6",
             "VOLT:DC:NPLC 1",
             "INITiate"
