@@ -9,23 +9,34 @@
     "InitialPhaseShiftPWM": 15,
     "VoltageLimit": 100,
     "CurrentLimit": 0.3,
-    "VoltageWrite": 40,
+    "VoltageWrite": 50,
     "timestep": 0.1,
-    "voltage_step": 4,
+    "voltage_step": 1,
     "PhaseInit": 15,
-    "PhaseFinal": 125,
-    "PhaseStep": 20,
+    "PhaseFinal": 60,
+    "PhaseStep": 30,
     "DutyInit": 485,
     "DutyFinal": 495,
     "DutyStep": 1,
     "HVpowerSupply": "ASRL27::INSTR",
-    "DMMforCurrent": "USB0::0xF4EC::0x1203::SDM36HCX800420::INSTR",
-    "DMMforVoltage": "USB0::0xF4EC::0x1203::SDM36HCX800421::INSTR",
-    "AddressOSCILLO": "USB0::0xF4EC::0x1011::SDS2PFFX801302::INSTR",
-    "Sequence": "5",
+    "DMMforCurrent": "SDM36HCX800420",
+    "DMMforVoltage": "SDM36HCX800421",
+    "AddressOSCILLO": "USB0::0xF4EC::0x1011::SDS2PDDX6R0968::INSTR",
+    "Sequence": 3,
     "delayOscillo": 0.5,
     "SaveEachFramePICTURE": 1,
     "SaveEachFrameDATA": 0,
-    "shield_vid": 12259,
-    "shield_pid": 257
+    "ScopeAutoMeasure": [
+        {
+            "type": "FREQ",
+            "channel": 1
+        },
+        {
+            "type": "AMPL",
+            "channel": 2
+        }
+    ],
+    "shield_vid": 7667,
+    "shield_pid": 257,
+    "dataOutputFolder": "DataResults"
 }

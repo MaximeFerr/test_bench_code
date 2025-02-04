@@ -10,6 +10,7 @@ import sys
 import time
 import math
 from datetime import datetime
+import matplotlib.pyplot as plt
 
 
 
@@ -24,8 +25,8 @@ tdiv_enum = [200e-12,500e-12, 1e-9, 2e-9, 5e-9, 10e-9, 20e-9, 50e-9, 100e-9, 200
 
 
 
-def ExportResultToCSV(String,Name):
-    f = open('csv-'+Name+'.csv','w')
+def ExportResultToCSV(String, name):
+    f = open(f'csv-{name}.csv', 'w')
     f.write(String) #Give your csv text here.
     ## Python will convert \n to os.linesep
     f.close()
@@ -39,44 +40,78 @@ def PlotValues(data):
     #plt.show()
 
 
-def ConfigTrigger(smu,nbFrames):
-    smu.write('TRIG:TYPE  EDGE ') # Edge
-    smu.write(':TRIGger:EDGE:SLOPe  RISing') # Rising Edge
-    #smu.write(':TRIGger:EDGE:HOLDoff  TIME') #HOLDoff with TIME
-    #smu.write(':TRIGger:EDGE:HLDTime  50E-03') # HOLDoff TIME 50ms
-    #smu.write(':TRIGger:EDGE:SOURce  C1') #Trigger Source C1
-    #smu.write(':TRIGger:EDGE:SOURce  EX') #Trigger Source External
-    smu.write(':TRIGger:EDGE:SOURce  EX5') #Trigger Source External /5
-    #smu.write(':TRIGger:EDGE:LEVel  0.00E-01') #Trigger Level 0V
-    smu.write(':TRIGger:EDGE:LEVel  7.00E-01') #Trigger Level 700mV
-    smu.write(':ACQuire:SEQuence ON') #Segmented Memory ON
-    #smu.write(':ACQuire:SEQuence:COUNt 200') # 200 Sequential Segments
-    smu.write(':ACQuire:SEQuence:COUNt '+nbFrames) # 200 Sequential Segments
-    smu.write('TRIG:MODE  SINGle') # Single
-    
-def ConfigDisplay(smu):
-    #smu.write(':TIMebase:SCALe  5.00E-06') #Timebase 5us / div
-    smu.write(':TIMebase:SCALe  2.00E-06') #Timebase 2us / div
+def ConfigTrigger(scope):
+    scope.write('TRIG:TYPE  EDGE ') # Edge
+    scope.write(':TRIGger:EDGE:SLOPe  RISing') # Rising Edge
+    #scope.write(':TRIGger:EDGE:HOLDoff  TIME') #HOLDoff with TIME
+    #scope.write(':TRIGger:EDGE:HLDTime  50E-03') # HOLDoff TIME 50ms
+    scope.write(':TRIGger:EDGE:SOURce  C1') #Trigger Source C1
+    #scope.write(':TRIGger:EDGE:SOURce  EX') #Trigger Source External
+#    scope.write(':TRIGger:EDGE:SOURce  EX5') #Trigger Source External /5
+    #scope.write(':TRIGger:EDGE:LEVel  0.00E-01') #Trigger Level 0V
+    scope.write(':TRIGger:EDGE:LEVel  7.00E-01') #Trigger Level 700mV
+    scope.write('TRIG:MODE  SINGle') # Single
 
 
-def GETPicture(smu,frame):
-    file_name = ".\Picture"+frame+".bmp" #Make sure that the drive specified is available on your computer
-    smu.chunk_size = 20*1024*1024 #default value is 20*1024(20k bytes) 
-    #smu.write("SCDP")
-    smu.write("PRIN? BMP") # BMP
-    #smu.write("PRIN? PNG")
-    result_str = smu.read_raw()
-    f = open(file_name,'wb')
+def ConfigSequence(scope, nbFrames):
+    scope.write(':ACQuire:SEQuence ON') #Segmented Memory ON
+    #scope.write(':ACQuire:SEQuence:COUNt 200') # 200 Sequential Segments
+    scope.write(f':ACQuire:SEQuence:COUNt {nbFrames}')  # 200 Sequential Segments
+
+
+def ConfigDisplay(scope):
+    #scope.write(':TIMebase:SCALe  5.00E-06') #Timebase 5us / div
+    scope.write(':TIMebase:SCALe  2.00E-06') #Timebase 2us / div
+
+
+def ConfigMeasure(scope):
+    scope.write(':MEASure ON')
+    scope.write(':MEASure:MODE ADVanced')
+    scope.write(':MEASure:ADVanced:STYLe M1')
+
+
+def HistoryMode(scope):
+    scope.write(':HISTORy ON')
+    scope.write(':HISTORy:INTERval 200.00E-03')  # 200 ms time interval for playing history
+    scope.write(':HISTORy:PLAy FORWards')  # PLay automatically all frames
+
+
+def SetFrame(scope, num: int):
+    scope.write(f':HISTORy:FRAMe {num}')
+
+
+def NewMeasure(scope, num: int, measure: dict):
+    type = measure.get('type')
+    source = measure.get('channel')
+    scope.write(f':MEASure:ADVanced:P{num} ON')
+    scope.write(f':MEASure:ADVanced:P{num}:SOURce1 C{source}')
+    scope.write(f':MEASure:ADVanced:P{num}:TYPE {type}')
+    print(f"Add Measure {num} on Ch{source} : {type}")
+
+
+def GetMeasure(scope, num: int):
+    if not 'ON' in scope.query(f':MEASure:ADVanced:P{num}?'):
+        print(f'Measure {num} is not set')
+        return 0
+    val_str = scope.query(f':MEASure:ADVanced:P{num}:VALue?').strip()
+    print(f'Get measure {num}: {val_str}')
+    if '****' in val_str:
+        return None
+    return eval(val_str)
+
+
+def SavePicture(scope, name: str, path: str = "", inverted: bool = False):
+    # Make sure that the drive specified is available on your computer
+    file_name = f"scope{'-Inverted-' if inverted else ''}{name}.bmp"
+    scope.chunk_size = 20 * 1024 * 1024  #default value is 20*1024(20k bytes)
+    #scope.write("SCDP")
+    scope.write(f"PRIN? BMP{',INVerted' if inverted else ''}")  # BMP
+    #scope.write("PRIN? PNG")
+    result_str = scope.read_raw()
+    f = open(os.path.join(path, file_name), 'wb')
     f.write(result_str)
     f.flush()
-    time.sleep(1)
-    file_name2 = ".\PictureInverted"+frame+".bmp"
-    smu.write("PRIN? BMP,INVerted")
-    result_str = smu.read_raw()
-    f = open(file_name2,'wb')
-    f.write(result_str)
-    f.flush() 
-
+    # time.sleep(0.2)
 
 
 #smu > instrument
@@ -84,27 +119,25 @@ def GETPicture(smu,frame):
 #SaveBitmap > save each frame as bitmap 1 for YES
 #SaveDate > export all channels as CSV, 1 for YES
 #delay > waiting delay between each frame
-def ReadHistory(smu,nbFrames,SaveBitmap,SaveData,delay):
-    smu.write(':HISTORy ON')
-    smu.write(':HISTORy:INTERval 200.00E-03') #200 ms time interval for playing history
-    smu.write(':HISTORy:PLAy FORWards') # PLay automatically all frames
+def ReadHistory(scope, nbFrames, SaveBitmap, SaveData, delay):
+    HistoryMode(scope)
     #Must wait here !!!! otherwise useless
-    nbFramesMax=int(nbFrames)
-    for frame in range(1,nbFramesMax+1,1):
-        frameString=str(frame)
-        smu.write(':HISTORy:FRAMe '+frameString)
+    for frame in range(1, nbFrames+1, 1):
+        SetFrame(scope, frame)
         time.sleep(delay)
-        if (SaveBitmap==1):
-            GETPicture(smu,frameString)
-            time.sleep(delay)
-        if (SaveData==1):
-            SaveDataOscillo(smu,'C1',frameString)
+        frameName = f'Data{frame}'
+        if SaveBitmap:
+            SavePicture(scope, frameName)
+            SavePicture(scope, frameName, inverted=True)
+            # time.sleep(delay)
+        if SaveData:
+            SaveDataOscillo(scope, 'C1', frameName)
             #pl.figure(1)
-            SaveDataOscillo(smu,'C2',frameString)
+            SaveDataOscillo(scope, 'C2', frameName)
             #pl.figure(2)
-            SaveDataOscillo(smu,'C3',frameString)
+            SaveDataOscillo(scope, 'C3', frameName)
             #pl.figure(3)
-            SaveDataOscillo(smu,'C4',frameString)
+            SaveDataOscillo(scope, 'C4', frameName)
             #pl.figure(4)
             #pl.show()
     
@@ -146,7 +179,7 @@ def main_desc(recv):
 # ========================================================= 
 # Main program: 
 # ========================================================= 
-def SaveDataOscillo(sds,CHANNEL,Name): 
+def SaveDataOscillo(sds, channel: str, name: str):
     #_rm = visa.ResourceManager() 
     #sds = _rm.open_resource(smu) 
     sds.timeout = 2000  # default value is 2000(2s) 
@@ -154,7 +187,7 @@ def SaveDataOscillo(sds,CHANNEL,Name):
  
     # Get the channel waveform parameter data blocks and parse them 
     sds.write(":WAVeform:STARt 0")
-    sds.write("WAV:SOUR {}".format(CHANNEL)) 
+    sds.write(f"WAV:SOUR {channel}")
     sds.write("WAV:PREamble?") 
     recv_all = sds.read_raw() 
     recv = recv_all[recv_all.find(b'#') + 11:] 
@@ -211,8 +244,17 @@ def SaveDataOscillo(sds,CHANNEL,Name):
     #pl.show()
     #
     # Save as CSV
-    ExportResultToCSV(str(time_value),CHANNEL+'-'+Name+'-timeX')
-    ExportResultToCSV(str(volt_value),CHANNEL+'-'+Name+'-valueY')
-    print('Channel: '+CHANNEL)
-    print('Frame / Name: '+Name)
+    ExportResultToCSV(str(time_value), f'{channel}-{name}-timeX')
+    ExportResultToCSV(str(volt_value), f'{channel}-{name}-valueY')
+    print(f'Channel: {channel} - Frame / Name: {name}')
 
+
+if __name__ == '__main__':
+    rm = visa.ResourceManager()
+    print(rm.list_resources())
+    scope = rm.open_resource('USB0::0xF4EC::0x1011::SDS2PDDX6R0968::INSTR', query_delay=2, timeout=4000)
+    print(scope.query('*IDN?'))
+
+    time.sleep(0.5)
+
+    scope.close()

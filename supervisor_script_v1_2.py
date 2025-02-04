@@ -7,6 +7,7 @@
 
 import time
 import matplotlib.pyplot as plt
+import pyvisa as visa
 
 # Import the updated Supervisor class
 from Supervisor_v2_2 import Supervisor
@@ -169,7 +170,10 @@ def main():
 
         try:
             # Optionally read or save oscilloscope history
-            sup.oscilloscope_read_history_and_choose_to_save()
+            # sup.oscilloscope_read_history_and_choose_to_save()
+
+            # new function that deals with screenshots, csv data, and measure for each frame
+            sup.oscilloscope_save_results()
         except Exception as e:
             errors.append(f"Failed to read and/or save Oscilloscope: {e}")
 
@@ -227,7 +231,16 @@ def main():
             print("All devices closed successfully. Test complete!")
 
 
-
-
 if __name__ == "__main__":
     main()
+
+    # sup = Supervisor(config_path="parameters.json")
+    # sup.open_oscilloscope()
+    # sup.oscilloscope_init()
+    # time.sleep(2)
+    # sup.oscilloscope_save_results()
+    # time.sleep(2)
+    # sup.close_oscilloscope()
+    # sup.close_rm_manager()
+
+

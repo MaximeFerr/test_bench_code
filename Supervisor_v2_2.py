@@ -57,6 +57,13 @@ class Supervisor:
         with open(config_path, 'r') as f:
             self.config = json.load(f)
 
+        self.result_output_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            self.config["dataOutputFolder"])
+        if not os.path.exists(self.result_output_path):
+            os.makedirs(self.result_output_path)
+        print(self.result_output_path)
+
         # 2. Store parameters in instance attributes (delays, PWM settings, limits, etc.)
         # Replace these lines in the constructor:
 
@@ -90,6 +97,7 @@ class Supervisor:
 
         self.Sequence = self.config['Sequence']
         self.delayOscillo = self.config['delayOscillo']
+        self.scopeMeasure = self.config['ScopeAutoMeasure']
 
         self.SaveEachFramePICTURE = self.config['SaveEachFramePICTURE']
         self.SaveEachFrameDATA = self.config['SaveEachFrameDATA']
@@ -666,7 +674,11 @@ class Supervisor:
         """
         if self.oscilloscope is None:
             raise ValueError("Oscilloscope is not opened.")
-        controloscillo.ConfigTrigger(self.oscilloscope, self.Sequence)
+        controloscillo.ConfigTrigger(self.oscilloscope)
+        controloscillo.ConfigMeasure(self.oscilloscope)
+        controloscillo.ConfigSequence(self.oscilloscope, self.Sequence)
+        for i, measureParam in enumerate(self.scopeMeasure):
+            controloscillo.NewMeasure(self.oscilloscope, i+1, measureParam)
 
     def oscilloscope_save_picture(self, name: str):
         """
@@ -680,7 +692,7 @@ class Supervisor:
         if self.oscilloscope is None:
             raise ValueError("Oscilloscope is not opened.")
         
-        controloscillo.GETPicture(self.oscilloscope, name)
+        controloscillo.SavePicture(self.oscilloscope, name)
 
     def oscilloscope_read_history_only(self):
         """
@@ -720,11 +732,42 @@ class Supervisor:
             raise ValueError("Oscilloscope is not opened.")
         controloscillo.SaveDataOscillo(self.oscilloscope, channel, name)
 
-    def oscilloscope_save_data_all_channels(self):
+    def oscilloscope_save_data_all_channels(self, name: str):
         """
         Saves oscilloscope data from all channels (C1, C2, C3, C4) using oscilloscope_save_data().
         """
-        self.oscilloscope_save_data('C1', '-TestName')
-        self.oscilloscope_save_data('C2', '-TestName')
-        self.oscilloscope_save_data('C3', '-TestName')
-        self.oscilloscope_save_data('C4', '-TestName')
+        self.oscilloscope_save_data('C1', name)
+        self.oscilloscope_save_data('C2', name)
+        self.oscilloscope_save_data('C3', name)
+        self.oscilloscope_save_data('C4', name)
+
+    def oscilloscope_save_results(self):
+        if self.oscilloscope is None:
+            raise ValueError("Oscilloscope is not opened.")
+        controloscillo.HistoryMode(self.oscilloscope)
+        meas_results = {}
+        for frame in range(1, self.Sequence + 1, 1):
+            controloscillo.SetFrame(self.oscilloscope, frame)
+            frame_name = f'Data{frame}'  #TODO: get a better name that includes measurement parameters
+
+            # Save screenshot for each frame if needed
+            if self.SaveEachFramePICTURE:
+                controloscillo.SavePicture(self.oscilloscope, frame_name)
+
+            # Save CSV data for each frame if needed
+            if self.SaveEachFrameDATA:
+                self.oscilloscope_save_data_all_channels(frame_name)
+            frame_meas = {}
+
+            # Put measurement results in a json file
+            for i, measureParam in enumerate(self.scopeMeasure):
+                frame_meas.update({f'{i+1}': {'type': measureParam.get('type'),
+                                              'channel': measureParam.get('channel'),
+                                              'value': controloscillo.GetMeasure(self.oscilloscope, i + 1)}})
+            print(frame_meas)
+            meas_results.update({frame_name: frame_meas})
+
+        # Write one json file with measurements for all frames
+        with open(f'{self.result_output_path}/results.json', "w") as f:
+            json.dump(meas_results, f, indent=4)
+

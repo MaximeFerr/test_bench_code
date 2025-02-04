@@ -48,17 +48,25 @@ parameters = {
     "HVpowerSupply": "ASRL27::INSTR",             # HV power supply VISA address
     "DMMforCurrent": "SDM36HCX800420",            # DMM for current
     "DMMforVoltage": "SDM36HCX800421",            # DMM for voltage
-    "AddressOSCILLO": "USB0::0xF4EC::0x1011::SDS2PFFX801302::INSTR", # Oscilloscope resource
+    # "AddressOSCILLO": "USB0::0xF4EC::0x1011::SDS2PFFX801302::INSTR", # Oscilloscope resource
+    "AddressOSCILLO": 'USB0::0xF4EC::0x1011::SDS2PDDX6R0968::INSTR',
 
     # Oscilloscope config
-    "Sequence": "3",          # Mode or ID for sequence config
+    "Sequence": 3,            # Mode or ID for sequence config
     "delayOscillo": 0.5,      # Additional wait time for oscilloscope actions
-    "SaveEachFramePICTURE": 0,# 1 to save pictures each frame, 0 otherwise
+    "SaveEachFramePICTURE": 1,# 1 to save pictures each frame, 0 otherwise
     "SaveEachFrameDATA": 0,   # 1 to save data each frame, 0 otherwise
+    "ScopeAutoMeasure": [
+        {'type': 'FREQ', 'channel': 1},
+        {'type': 'AMPL', 'channel': 2}
+    ],
 
     # Microcontroller (shield) parameters
     "shield_vid": 7667,       # e.g., 0x2fe3 => decimal 7667
-    "shield_pid": 257         # e.g., 0x0101 => decimal 257
+    "shield_pid": 257,         # e.g., 0x0101 => decimal 257
+
+    # Results output folder
+    "dataOutputFolder": "DataResults"
 }
 
 def write_parameters_to_json(filename: str = "parameters.json"):
@@ -90,6 +98,7 @@ def main():
     write_parameters_to_json("parameters.json")
 
     print("\nDone. 'parameters.json' created or updated.")
+
 
 if __name__ == "__main__":
     main()
