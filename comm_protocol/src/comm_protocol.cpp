@@ -222,6 +222,12 @@ void initial_handle(uint8_t received_char)
             console_read_line();
             printk("0 buffer str = %s\n", bufferstr);
             scopeHandler();
+            break;
+        // case 'f': // 'o' for oscilloscope -> scope command ('a' or 'r')
+        //     console_read_line();
+        //     printk("0 buffer str = %s\n", bufferstr);
+        //     frequencyHandler();
+        //     break;
         // case 't': // 'o' for oscilloscope -> scope command ('a' or 'r')
         //     console_read_line();
         //     printk("buffer str = %s\n", bufferstr);
@@ -446,28 +452,30 @@ void phaseShiftHandler(uint8_t power_leg, uint8_t setting_position){
 }
 
 void frequencyHandler(uint8_t power_leg, uint8_t setting_position){
-    // Check if the bufferstr starts with "_d_"
+    // Check if the bufferstr starts with "_f_"
     if (strncmp(bufferstr, "_LEG1_f_", 8) == 0 || 
         strncmp(bufferstr, "_LEG2_f_", 8) == 0 || 
         strncmp(bufferstr, "_LEG3_f_", 8) == 0) 
     {
-        // Extract the phase shift value from the protocol message
+        // Extract the frequency value from the protocol message
         uint32_t frequency = atoi(bufferstr + 8);
         printk("\n");
         printk("frequency value = %d", frequency);
         printk("\n");
 
-        hrtim_tu_number_t unit = PWMA;
+        hrtim_tu_number_t unit = PWMA; // all units have the same frequency, so we take PWMA as reference
 
-        // Check if the phase shift value is within the valid range (min-max)
-        if (frequency >= spin.pwm.getFrequencyMin(unit) && frequency <= spin.pwm.getFrequencyMax(unit)) {
-            // Update the duty cycle variable
+        // Check if the frequency value is within the valid range (min-max)
+        uint32_t min_freq = spin.pwm.getFrequencyMin(unit);
+        uint32_t max_freq = spin.pwm.getFrequencyMax(unit);
+        if (frequency >= min_freq && frequency <= max_freq) {
+            // Update the frequency variable
             spin.pwm.setFrequency(frequency);
             power_leg_settings[power_leg].frequency = frequency;
         } else {
             printk("Invalid frequency value: %d\n", frequency);
-            printk("Min frequency value: %d\n", frequency);
-            printk("Max frequency value: %d\n", frequency);
+            printk("Min frequency value: %d\n", min_freq);
+            printk("Max frequency value: %d\n", max_freq);
         }
     } else {
         printk("Invalid protocol format: %s\n", bufferstr);
@@ -654,7 +662,7 @@ void boolSettingsHandler(uint8_t power_leg, uint8_t setting_position)
     } else if (strncmp(bufferstr + 7, "_off", 4) == 0) {
         power_leg_settings[power_leg].settings[setting_position] = BOOL_SETTING_OFF;
 #ifdef CONFIG_SHIELD_TWIST
-        if (setting_position == BOOL_CAPA)  shield.power.connectCapacitor((leg_t)power_leg);  //turns the capacitor switch ON
+        if (setting_position == BOOL_CAPA)  shield.power.disconnectCapacitor((leg_t)power_leg);  //turns the capacitor switch ON
 #endif
         if (setting_position == BOOL_DRIVER) shield.power.disconnectDriver((leg_t)power_leg) ;  
     }
