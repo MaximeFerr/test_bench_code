@@ -87,12 +87,17 @@ Commonparameters = {
     "DMMforCurrent": "USB0::0xF4EC::0x1203::SDM36HCX800420::INSTR",            # DMM for current
     "DMMforVoltage": "USB0::0xF4EC::0x1203::SDM36HCX800421::INSTR",            # DMM for voltage
     "AddressOSCILLO": "USB0::0xF4EC::0x1011::SDS2PFFX801302::INSTR", # Oscilloscope resource
+    # "AddressOSCILLO": 'USB0::0xF4EC::0x1011::SDS2PDDX6R0968::INSTR', # for testing
 
     # Oscilloscope config
-##    "Sequence": "3",          # Mode or ID for sequence config
+##    "Sequence": 3,          # Mode or ID for sequence config
     "delayOscillo": delayOscillo,      # Additional wait time for oscilloscope actions
     "SaveEachFramePICTURE": SaveEachFramePICTURE,# 1 to save pictures each frame, 0 otherwise
     "SaveEachFrameDATA": SaveEachFrameDATA,   # 1 to save data each frame, 0 otherwise
+    "ScopeAutoMeasure": [                   # Configure scope measurements list
+        {'type': 'FREQ', 'channel': 1},
+        {'type': 'AMPL', 'channel': 2}
+    ],
 
     # Microcontroller (shield) parameters
     "shield_vid": 12259,       # e.g., 0x2fe3 => decimal 7667
@@ -101,6 +106,9 @@ Commonparameters = {
     #Parameters
     "TotalR": TotalR,
     "InductorL": InductorL
+    
+    # Results output folder
+    "dataOutputFolder": "DataResults"
 }
 
 ### Concatenate parameter1 and parameter2 (combine them into a single dictionary)
@@ -150,7 +158,7 @@ for i in range(Phi.shape[1]):  # iterate over columns
         "PhaseFinal": max_val+1,
         "PhaseStep": step,
         "VoltageWrite": voltage_write,
-        "Sequence": f"{nbPointsI}",
+        "Sequence": nbPointsI,
         "Imin":Imin,
         "Imax":Imax,
         "DutyInit": 0,         # Start duty * 1000 (e.g., 485 => 0.485)
