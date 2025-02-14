@@ -105,7 +105,7 @@ Commonparameters = {
 
     #Parameters
     "TotalR": TotalR,
-    "InductorL": InductorL
+    "InductorL": InductorL,
     
     # Results output folder
     "dataOutputFolder": "DataResults"

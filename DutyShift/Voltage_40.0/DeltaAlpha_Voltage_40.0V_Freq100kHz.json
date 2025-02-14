@@ -1,0 +1,10 @@
+{
+    "frequencyPWM": 100,
+    "DutyInit": 7.0,
+    "DutyFinal": 44.0,
+    "DutyStep": 7.4,
+    "VoltageWrite": 40.0,
+    "Sequence": 6,
+    "Imin": 0.5,
+    "Imax": 3
+}

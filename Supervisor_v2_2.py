@@ -63,7 +63,7 @@ class Supervisor:
         if not os.path.exists(self.result_output_path):
             os.makedirs(self.result_output_path)
         print(self.result_output_path)
-
+        
         # 2. Store parameters in instance attributes (delays, PWM settings, limits, etc.)
         # Replace these lines in the constructor:
 
@@ -269,7 +269,7 @@ class Supervisor:
             print("Oscilloscope is already opened.")
             return
         try:
-            self.oscilloscope = self.rm.open_resource(self.oscilloscope_name, query_delay=2, timeout=4000)
+            self.oscilloscope = self.rm.open_resource(self.oscilloscope_name, query_delay=0.5, timeout=6000)
             print(f"Opened oscilloscope => {self.oscilloscope_name}")
 ##            # Clear and flush buffer
 ##            self.oscilloscope.flush()
@@ -752,7 +752,8 @@ class Supervisor:
 
             # Save screenshot for each frame if needed
             if self.SaveEachFramePICTURE:
-                controloscillo.SavePicture(self.oscilloscope, frame_name)
+                controloscillo.SavePicture(self.oscilloscope, frame_name) # Non inverted
+                controloscillo.SavePicture(self.oscilloscope, frame_name, "", True) # inverted
 
             # Save CSV data for each frame if needed
             if self.SaveEachFrameDATA:

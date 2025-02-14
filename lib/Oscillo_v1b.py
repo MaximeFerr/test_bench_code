@@ -45,9 +45,9 @@ def ConfigTrigger(scope):
     scope.write(':TRIGger:EDGE:SLOPe  RISing') # Rising Edge
     #scope.write(':TRIGger:EDGE:HOLDoff  TIME') #HOLDoff with TIME
     #scope.write(':TRIGger:EDGE:HLDTime  50E-03') # HOLDoff TIME 50ms
-    scope.write(':TRIGger:EDGE:SOURce  C1') #Trigger Source C1
+    #scope.write(':TRIGger:EDGE:SOURce  C1') #Trigger Source C1
     #scope.write(':TRIGger:EDGE:SOURce  EX') #Trigger Source External
-#    scope.write(':TRIGger:EDGE:SOURce  EX5') #Trigger Source External /5
+    scope.write(':TRIGger:EDGE:SOURce  EX5') #Trigger Source External /5
     #scope.write(':TRIGger:EDGE:LEVel  0.00E-01') #Trigger Level 0V
     scope.write(':TRIGger:EDGE:LEVel  7.00E-01') #Trigger Level 700mV
     scope.write('TRIG:MODE  SINGle') # Single
@@ -182,7 +182,7 @@ def main_desc(recv):
 def SaveDataOscillo(sds, channel: str, name: str):
     #_rm = visa.ResourceManager() 
     #sds = _rm.open_resource(smu) 
-    sds.timeout = 2000  # default value is 2000(2s) 
+    sds.timeout = 6000  # default value is 2000(2s) 
     sds.chunk_size = 20 * 1024 * 1024  # default value is 20*1024(20k bytes) 
  
     # Get the channel waveform parameter data blocks and parse them 
@@ -252,7 +252,7 @@ def SaveDataOscillo(sds, channel: str, name: str):
 if __name__ == '__main__':
     rm = visa.ResourceManager()
     print(rm.list_resources())
-    scope = rm.open_resource('USB0::0xF4EC::0x1011::SDS2PDDX6R0968::INSTR', query_delay=2, timeout=4000)
+    scope = rm.open_resource('USB0::0xF4EC::0x1011::SDS2PDDX6R0968::INSTR', query_delay=0.5, timeout=6000)
     print(scope.query('*IDN?'))
 
     time.sleep(0.5)
