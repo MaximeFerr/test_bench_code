@@ -10,21 +10,22 @@ def ReadXYfromcsv(Name):
     xtime = np.genfromtxt(Name+'timeX.csv', delimiter=',')
     print(f"Loaded {len(xtime)}, {len(yvoltage)} points")
     return xtime,yvoltage
-    
+
+Frame='5'    
 # Load data
-time1,C1=ReadXYfromcsv('../data/csv-C1-1-')
+time1,C1=ReadXYfromcsv('../data/csv-C1-Data'+Frame+'-')
 plt.figure(1)
 plt.plot(time1,C1)
 
-time2,C2=ReadXYfromcsv('../data/csv-C2-1-')
+time2,C2=ReadXYfromcsv('../data/csv-C2-Data'+Frame+'-')
 plt.figure(2)
 plt.plot(time2,C2,color='green')
 
-time3,C3=ReadXYfromcsv('../data/csv-C3-1-')
+time3,C3=ReadXYfromcsv('../data/csv-C3-Data'+Frame+'-')
 plt.figure(3)
 plt.plot(time3,C3,color='red')
 
-time4,C4=ReadXYfromcsv('../data/csv-C4-1-')
+time4,C4=ReadXYfromcsv('../data/csv-C4-Data'+Frame+'-')
 plt.figure(4)
 plt.plot(time4,C4)
 
