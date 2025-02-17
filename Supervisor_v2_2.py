@@ -564,7 +564,7 @@ class Supervisor:
     # -------------------------------------------------
     # PART 6: HV Power Supply Functions
     # -------------------------------------------------
-    def power_supply_output_change(self, state: str, delay = 0.1):
+    def power_supply_output_change(self, state: str, delay = 0.3):
         """
         Changes the output state of the HV power supply (e.g., 'ON' or 'OFF').
 
@@ -580,7 +580,7 @@ class Supervisor:
         self.hv_power_supply.write(cmd)
         time.sleep(delay)
 
-    def power_supply_check_voltage(self, delay = 0.1) -> float:
+    def power_supply_check_voltage(self, delay = 0.3) -> float:
         """
         Queries the HV power supply for the measured voltage.
 
@@ -597,7 +597,7 @@ class Supervisor:
         time.sleep(delay)
         return float(result)
 
-    def power_supply_check_current(self, delay = 0.1) -> float:
+    def power_supply_check_current(self, delay = 0.3) -> float:
         """
         Queries the HV power supply for the measured current.
 
@@ -614,7 +614,7 @@ class Supervisor:
         time.sleep(delay)
         return float(result)
 
-    def power_supply_voltage_ramp_up(self, voltage: float, step_value: float, start_value=0, delay = 0.1):
+    def power_supply_voltage_ramp_up(self, voltage: float, step_value: float, start_value=0, delay = 0.2):
         """
         Ramps up the voltage of the HV power supply from start_value to 'voltage', 
         in steps of step_value, waiting self.timestep between steps.
@@ -634,12 +634,13 @@ class Supervisor:
         self.hv_power_supply.write('VOLTage:MODE FIX')
         steps = np.arange(start_value, voltage + step_value, step_value)
         for x in steps:
-            cmd2 = f'VOLTage:LEV {x}'
+            x2=round(x)
+            cmd2 = f'VOLT:LEV {x2}'
             self.hv_power_supply.write(cmd2)
             time.sleep(delay)
         time.sleep(delay)
 
-    def power_supply_voltage_ramp_down(self, start_voltage: float, end_value: float, step_value: float, delay = 0.1):
+    def power_supply_voltage_ramp_down(self, start_voltage: float, end_value: float, step_value: float, delay = 0.2):
         """
         Ramps down the voltage of the HV power supply from 'start_voltage' to 'end_value', 
         in negative increments (step_value < 0), waiting self.timestep between steps.
@@ -659,7 +660,8 @@ class Supervisor:
         self.hv_power_supply.write('VOLTage:MODE FIX')
         steps = np.arange(start_voltage, end_value, step_value)
         for x in steps:
-            cmd2 = f'VOLTage:LEV {x}'
+            x2=round(x)
+            cmd2 = f'VOLT:LEV {x2}'
             self.hv_power_supply.write(cmd2)
             time.sleep(delay)
         time.sleep(delay)
