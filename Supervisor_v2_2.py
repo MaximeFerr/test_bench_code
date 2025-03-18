@@ -1,33 +1,26 @@
+#! python3
+
 import json
 import os
 import sys
 import time
 import math
-import struct
-import gc
 from datetime import datetime
 from typing import cast, Any
 
-# Expand module path if needed
-parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
-sys.path.insert(0, parent_dir)
-
-import serial
 import serial.serialutil
 import pyvisa as visa
-from pyvisa import constants
-from pyvisa.resources import Resource
 import numpy as np
-
 import matplotlib.pyplot as plt
-import matplotlib.animation as animation
-import pylab as pl 
 
 from comm_protocol.src import find_devices
 from comm_protocol.src.Shield_Class import Shield_Device
 import lib.Oscillo_v1b as controloscillo
 
-from datetime import datetime
+
+# Expand module path if needed
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
+sys.path.insert(0, parent_dir)
 
 
 class Supervisor:
@@ -125,11 +118,18 @@ class Supervisor:
         Opens all known instruments (power supply, DMMs, oscilloscope) 
         and stores the resource objects in instance attributes.
         """
-        self.open_hv_power_supply()
+        
         self.open_dmm_for_current()
+        time.sleep(0.5)
         self.open_dmm_for_voltage()
-        self.open_oscilloscope()
+        time.sleep(0.5)
+        self.open_hv_power_supply()
+        time.sleep(0.5)
         self.open_microcontroller()
+        time.sleep(0.5)
+        self.open_oscilloscope()
+        time.sleep(0.5)
+
 
     def close_all_devices(self):
         """
@@ -305,9 +305,6 @@ class Supervisor:
             print("Microcontroller is already opened.")
             return
 
-        from comm_protocol.src import find_devices
-        from comm_protocol.src.Shield_Class import Shield_Device
-
         # Find the microcontroller ports
         ports = find_devices.find_shield_device_ports(self.microcontroller_vid, self.microcontroller_pid)
         if not ports:
@@ -337,7 +334,6 @@ class Supervisor:
     # -------------------------------------------------
     def TimeStamp(self):
         # Generate a time-based string here
-        from datetime import datetime
         now = datetime.now()
 
         # Create a timestamp like "HH_MM_SS-DD_MM_YYYY"
@@ -363,15 +359,7 @@ class Supervisor:
             Additional string appended to the filename, e.g., "_Current".
             If None, no extra string is appended.
         """
-##        # Generate a time-based string here
-##        from datetime import datetime
-##        now = datetime.now()
-##
-##        # Create a timestamp like "HH_MM_SS-DD_MM_YYYY"
-##        day = now.strftime("%d_%m_%Y")
-##        current_time = now.strftime("%H_%M_%S")
-##        stamp = f"{current_time}-{day}"
-
+        # Generate a time-based string here
         stamp = self.TimeStamp()
 
         # Construct filename depending on whether extra_name is provided
@@ -381,7 +369,7 @@ class Supervisor:
             filename = f"csv-{stamp}.csv"
 
         # Write the data to the file
-        with open(filename, 'w') as f:
+        with open(os.path.join(self.result_output_path,filename), 'w') as f:
             f.write(data_string)
 
         print(f"CSV exported to {filename}")
@@ -421,6 +409,34 @@ class Supervisor:
     # -------------------------------------------------
     # PART 4: DMM Functions
     # -------------------------------------------------
+    def dmm_setup(self):
+        # Configure DMMs (already opened in sup.dmm_for_current, sup.dmm_for_voltage)
+        # For example, we can send SCPI commands to set them up
+        self.dmm_send_cmd(self.dmm_for_current, [
+            "*RST",
+            "CONF:CURR:DC 0.2",
+            "CURR:DC:AZ OFF",
+            #"CONF:CURR:DC AUTO",
+            "TRIG:SOUR EXT;SLOP POS",
+            "TRIG:COUN 5",
+            "SAMP:COUN 7",
+            "TRIG:DEL 100E-6",
+            "CURR:DC:NPLC 1",
+            "INITiate"
+        ], delay=0.1)
+        self.dmm_send_cmd(self.dmm_for_voltage, [
+            "*RST",
+            "CONF:VOLT:DC 200",
+            "VOLT:DC:AZ OFF",
+            #"CONF:VOLT:DC AUTO",
+            "TRIG:SOUR EXT;SLOP POS",
+            "TRIG:COUN 5",
+            "SAMP:COUN 7",
+            "TRIG:DEL 100E-6",
+            "VOLT:DC:NPLC 1",
+            "INITiate"
+        ], delay=0.1)            
+    
     def dmm_send_cmd(self, dmm, cmd_list: list[str], delay = 0.1):
         """
         Sends a list of SCPI commands to a given DMM resource, printing them for visibility.
@@ -498,6 +514,23 @@ class Supervisor:
     # -------------------------------------------------
     # PART 5: Microcontroller Phase / Duty Functions
     # -------------------------------------------------
+    def microcontroller_setup(self):
+        self.microcontroller_send_command("LEG", "LEG1", "ON")
+        self.microcontroller_send_command("LEG", "LEG2", "ON")
+        self.microcontroller_send_command("POWER_ON")
+
+        # We assume the JSON config defines sup.DutyPWM, sup.frequencyPWM, sup.DeadTimePWM, etc.
+        self.microcontroller_send_command("DUTY", "LEG1", self.DutyPWM)
+        self.microcontroller_send_command("DUTY", "LEG2", self.DutyPWM)
+
+        self.microcontroller_send_command("FREQUENCY", "LEG1", self.frequencyPWM)
+        self.microcontroller_send_command("DEAD_TIME_RISING", "LEG2", self.DeadTimePWM)
+        self.microcontroller_send_command("DEAD_TIME_RISING", "LEG1", self.DeadTimePWM)
+        self.microcontroller_send_command("DEAD_TIME_FALLING", "LEG2", self.DeadTimePWM)
+        self.microcontroller_send_command("DEAD_TIME_FALLING", "LEG1", self.DeadTimePWM)
+
+        self.microcontroller_send_command("PHASE_SHIFT", "LEG2", self.InitialPhaseShiftPWM)
+
 
     def microcontroller_send_command(self, action: str, *args, delay=0.2):
         """
@@ -669,7 +702,7 @@ class Supervisor:
     # -------------------------------------------------
     # PART 7: Oscilloscope Functions
     # -------------------------------------------------
-    def oscilloscope_init(self):
+    def oscilloscope_setup(self):
         """
         Initializes the oscilloscope (e.g., configures trigger settings).
         Uses an external library method (controloscillo.ConfigTrigger).
@@ -694,7 +727,7 @@ class Supervisor:
         if self.oscilloscope is None:
             raise ValueError("Oscilloscope is not opened.")
         
-        controloscillo.SavePicture(self.oscilloscope, name)
+        controloscillo.SavePicture(self.oscilloscope, name, self.result_output_path.replace('/','\\'))
 
     def oscilloscope_read_history_only(self):
         """
@@ -732,7 +765,7 @@ class Supervisor:
         """
         if self.oscilloscope is None:
             raise ValueError("Oscilloscope is not opened.")
-        controloscillo.SaveDataOscillo(self.oscilloscope, channel, name)
+        controloscillo.SaveDataOscillo(self.oscilloscope, channel, os.path.join(self.result_output_path, name))
 
     def oscilloscope_save_data_all_channels(self, name: str):
         """
@@ -754,8 +787,8 @@ class Supervisor:
 
             # Save screenshot for each frame if needed
             if self.SaveEachFramePICTURE:
-                controloscillo.SavePicture(self.oscilloscope, frame_name) # Non inverted
-                controloscillo.SavePicture(self.oscilloscope, frame_name, "", True) # inverted
+                controloscillo.SavePicture(self.oscilloscope, frame_name, self.result_output_path.replace('/','\\')) # Non inverted
+                controloscillo.SavePicture(self.oscilloscope, frame_name, self.result_output_path.replace('/','\\'), True) # inverted
 
             # Save CSV data for each frame if needed
             if self.SaveEachFrameDATA:
