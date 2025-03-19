@@ -3,6 +3,7 @@
 pyvisa
 matplotlib
 numpy
-pyvia-py
+pyvisa-py
 pyserial
 zeroconf
+psutil
