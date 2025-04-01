@@ -25,8 +25,10 @@ tdiv_enum = [200e-12,500e-12, 1e-9, 2e-9, 5e-9, 10e-9, 20e-9, 50e-9, 100e-9, 200
 
 
 
-def ExportResultToCSV(String, name):
-    f = open(f'csv-{name}.csv', 'w')
+def ExportResultToCSV(String, name, path):
+    file_name= f"csv-{name}.csv"
+    print(file_name)
+    f = open(os.path.join(path, file_name), 'w')
     f.write(String) #Give your csv text here.
     ## Python will convert \n to os.linesep
     f.close()
@@ -111,6 +113,7 @@ def SavePicture(scope, name: str, path: str = "", inverted: bool = False):
     f = open(os.path.join(path, file_name), 'wb')
     f.write(result_str)
     f.flush()
+    del result_str
     # time.sleep(0.2)
 
 
@@ -125,6 +128,8 @@ def ReadHistory(scope, nbFrames, SaveBitmap, SaveData, delay):
     for frame in range(1, nbFrames+1, 1):
         SetFrame(scope, frame)
         time.sleep(delay)
+        #scope.write(':SYSTem:MENU OFF')
+        #time.sleep(delay) DOES NOT WORK
         frameName = f'Data{frame}'
         if SaveBitmap:
             SavePicture(scope, frameName)
@@ -174,12 +179,12 @@ def main_desc(recv):
     code = struct.unpack('f', code_per_div)[0] 
     adc_bit = struct.unpack('h', adc_bit)[0] 
     tdiv = tdiv_enum[tdiv_index] 
-    return vdiv, offset, interval, delay, tdiv, code, adc_bit 
+    return vdiv, offset, interval, delay, tdiv, code, adc_bit,data_bytes 
  
 # ========================================================= 
 # Main program: 
 # ========================================================= 
-def SaveDataOscillo(sds, channel: str, name: str):
+def SaveDataOscillo(sds, channel: str,  name: str, path: str = ""):
     #_rm = visa.ResourceManager() 
     #sds = _rm.open_resource(smu) 
     sds.timeout = 6000  # default value is 2000(2s) 
@@ -187,13 +192,15 @@ def SaveDataOscillo(sds, channel: str, name: str):
  
     # Get the channel waveform parameter data blocks and parse them 
     sds.write(":WAVeform:STARt 0")
+    sds.write(":WAVeform:POINt 0")
     sds.write(f"WAV:SOUR {channel}")
     sds.write("WAV:PREamble?") 
     recv_all = sds.read_raw() 
-    recv = recv_all[recv_all.find(b'#') + 11:] 
-    print(len(recv)) 
-    vdiv, ofst, interval, trdl, tdiv, vcode_per, adc_bit = main_desc(recv) 
-    print(vdiv, ofst, interval, trdl, tdiv,vcode_per,adc_bit) 
+    recv = recv_all[recv_all.find(b'#') + 11:]
+    time_stamp = recv[346:] 
+    print("Length received",len(recv)) 
+    vdiv, ofst, interval, trdl, tdiv, vcode_per, adc_bit,data_bytes = main_desc(recv) 
+    print(vdiv, ofst, interval, trdl, tdiv,vcode_per,adc_bit,data_bytes) 
  
     # Get the waveform points and confirm the number of waveform slice reads 
     points = float(sds.query(":ACQuire:POINts?").strip()) 
@@ -214,13 +221,49 @@ def SaveDataOscillo(sds, channel: str, name: str):
         #Set the starting point of each slice 
         sds.write(":WAVeform:STARt {}".format(start)) 
         #Get the waveform data of each slice 
-        sds.write("WAV:DATA?") 
+        sds.write("WAV:DATA?")
         recv_rtn = sds.read_raw().rstrip() 
         #Splice each waveform data based on data block information 
         block_start = recv_rtn.find(b'#') 
         data_digit = int(recv_rtn[block_start + 1:block_start + 2]) 
         data_start = block_start + 2 + data_digit 
-        recv_byte += recv_rtn[data_start:] 
+        recv_byte += recv_rtn[data_start:]
+
+    if data_bytes != len(recv_byte):
+        print("data bytes",data_bytes,"len recv byte",len(recv_byte))
+        print("Problem")
+        print("Length recv_rtn",len(recv_rtn))
+        Diff=data_bytes-len(recv_byte)
+        print(Diff)
+        points=points-Diff
+        print(points)
+        if adc_bit > 8:
+            Mult=2
+        else:
+            Mult=1
+        data_stop=data_start+Mult*points
+        recv_byte=recv_rtn[data_start:int(data_stop)]
+##        points=int(len(recv_byte)/2)+1
+##        recv_byte[points]=+0
+##        recv_byte += 0
+
+##        Diff=data_bytes-len(recv_byte)
+##        del recv_byte
+##        recv_byte = b''
+##        print(Diff)
+##        recv_byte += recv_rtn[data_start-Diff:]
+##        points=points-Diff
+##        print(points)
+##        data_stop = block_start + 2 + data_digit+points
+##        recv_byte += recv_rtn[data_start:data_stop]
+        
+            
+    
+##    print("Length recv_rtn",len(recv_rtn))
+    print("points",points)
+##    print(one_piece_num)
+##    print(read_times)
+    print(len(recv_byte))
     # Unpack signed byte data. 
     if adc_bit > 8: 
         convert_data = struct.unpack("%dh"%points, recv_byte)
@@ -244,9 +287,10 @@ def SaveDataOscillo(sds, channel: str, name: str):
     #pl.show()
     #
     # Save as CSV
-    ExportResultToCSV(str(time_value), f'{channel}-{name}-timeX')
-    ExportResultToCSV(str(volt_value), f'{channel}-{name}-valueY')
+    ExportResultToCSV(str(time_value), f'{channel}-{name}-timeX',path)
+    ExportResultToCSV(str(volt_value), f'{channel}-{name}-valueY',path)
     print(f'Channel: {channel} - Frame / Name: {name}')
+    del recv_all,time_value,volt_value,recv,convert_data,recv_rtn
 
 
 if __name__ == '__main__':

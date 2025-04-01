@@ -765,7 +765,8 @@ class Supervisor:
         """
         if self.oscilloscope is None:
             raise ValueError("Oscilloscope is not opened.")
-        controloscillo.SaveDataOscillo(self.oscilloscope, channel, os.path.join(self.result_output_path, name))
+##        controloscillo.SaveDataOscillo(self.oscilloscope, channel, os.path.join(self.result_output_path, name))
+        controloscillo.SaveDataOscillo(self.oscilloscope, channel, name, self.result_output_path)
 
     def oscilloscope_save_data_all_channels(self, name: str):
         """
@@ -785,14 +786,18 @@ class Supervisor:
             controloscillo.SetFrame(self.oscilloscope, frame)
             frame_name = f'Data{frame}'  #TODO: get a better name that includes measurement parameters
 
-            # Save screenshot for each frame if needed
-            if self.SaveEachFramePICTURE:
-                controloscillo.SavePicture(self.oscilloscope, frame_name, self.result_output_path.replace('/','\\')) # Non inverted
-                controloscillo.SavePicture(self.oscilloscope, frame_name, self.result_output_path.replace('/','\\'), True) # inverted
-
             # Save CSV data for each frame if needed
             if self.SaveEachFrameDATA:
                 self.oscilloscope_save_data_all_channels(frame_name)
+
+            # Save screenshot for each frame if needed
+            if self.SaveEachFramePICTURE:
+                #controloscillo.SavePicture(self.oscilloscope, frame_name, self.result_output_path.replace('/','\\')) # Non inverted
+                #controloscillo.SavePicture(self.oscilloscope, frame_name, self.result_output_path.replace('/','\\'), True) # inverted
+                controloscillo.SavePicture(self.oscilloscope, frame_name, self.result_output_path) # Non inverted
+                controloscillo.SavePicture(self.oscilloscope, frame_name, self.result_output_path, True) # inverted
+
+
             frame_meas = {}
 
             # Put measurement results in a json file

@@ -13,13 +13,13 @@
     "timestep": 0.1,
     "voltage_step": 4,
 
-    "HVpowerSupply": "ASRL5::INSTR",
+    "HVpowerSupply": "ASRL/dev/ttyACM0::INSTR",
     "DMMforCurrent": "TCPIP0::169.254.126.119::inst0::INSTR",
     "DMMforVoltage": "TCPIP0::169.254.126.120::inst0::INSTR",
     "AddressOSCILLO": "TCPIP0::169.254.186.255::inst0::INSTR",
     
     "SaveEachFramePICTURE": 1,
-    "SaveEachFrameDATA": 0,
+    "SaveEachFrameDATA": 1,
     "ScopeAutoMeasure": [
         {
             "type": "FREQ",
