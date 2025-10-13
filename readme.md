@@ -1,9 +1,22 @@
-Sure, here's the updated `README.md` file for you to copy:
-
 LAAS-LAPLACE Hackathon Test Bench
 ==================================
 
 This repository contains the code for the LAAS-LAPLACE Hackathon Test Bench. The test bench is composed of digital multimeters, an oscilloscope, a power supply, a device under test (DUT: two half bridges in opposition) and a PWM generator (SPIN Board).
+
+This project started as a 2-day HACKATHON at LAAS+LAPLACE (Apr. 2024), then followed by monthly open science sessions, a.k.a open power tuesday.
+
+NEW (Oct. 2025): Open dataset of measured switching losses
+------------
+From October 2025, a dataset has been created and is hosted at zenodo.org, associated with a license CC BY SA 4.0
+
+Rouger, N., & Lavado Villa, L. F. (2025). Dataset from switching loss measurement test bench by opposition method [Data set]. Zenodo. https://doi.org/10.5281/zenodo.17296030
+
+At the moment, this dataset contains measured total losses with 200 V Silicon MOSFETs, and extracted Eoff switching losses.
+
+
+Description
+------------
+(This part is a work in progress - must be updated)
 
 A supervisor has been written `Supervisor_v1_2.py` which will do the test sequence:
 1) Config microcontroller and turn ON gate signal
