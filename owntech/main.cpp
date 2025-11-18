@@ -134,8 +134,8 @@ void setup_routine()
     shield.power.initBuck(LEG1);
     shield.power.initBuck(LEG2);
 
-    shield.power.setDutyCycleMin(0.0);
-    shield.power.setDutyCycleMax(1.0);
+    shield.power.setDutyCycleMin(ALL,0.0);
+    shield.power.setDutyCycleMax(ALL,1.0);
 
     spin.gpio.configurePin(PHASE_GPIO,OUTPUT);
     // spin.gpio.configurePin(PWM_GPIO,OUTPUT);
