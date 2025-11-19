@@ -91,7 +91,7 @@ class Shield_Device:
                                     "CR": {"index": 19},
                                     "RS": {"index": 20}}
 
-        if self.shield_type is "TWIST" :
+        if self.shield_type == "TWIST" :
             self.shield_message_index = twist_message_index
             self.message_lenght = twist_message_length
 
@@ -143,7 +143,7 @@ class Shield_Device:
             self.shield_serialObj.write(chunk.encode('utf-8'))
 
             # Wait for a short period
-            time.sleep(0.1)
+            time.sleep(0.002)
 
         # Send the end of line
         self.shield_serialObj.write(b'\r\n')
@@ -207,7 +207,7 @@ class Shield_Device:
         return reading
 
 
-    def sendCommand(self, action, *args, delay=0.2):
+    def sendCommand(self, action, *args, delay=0.02):
         """
         Generate and send a message to the Twist board based on the specified action and optional parameters.
 

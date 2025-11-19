@@ -1,4 +1,5 @@
 #! python3
+#! python3
 
 import json
 import os
@@ -419,9 +420,9 @@ class Supervisor:
             #"CONF:CURR:DC AUTO",
             "TRIG:SOUR EXT;SLOP POS",
             "TRIG:COUN 5",
-            "SAMP:COUN 7",
-            "TRIG:DEL 100E-6",
-            "CURR:DC:NPLC 1",
+            "SAMP:COUN 3",
+            "TRIG:DEL 1E-6",# double check if TRIG:DEL:AUTO 0 is required or not!!!
+            "CURR:DC:NPLC 0.5",
             "INITiate"
         ], delay=0.1)
         self.dmm_send_cmd(self.dmm_for_voltage, [
@@ -431,9 +432,9 @@ class Supervisor:
             #"CONF:VOLT:DC AUTO",
             "TRIG:SOUR EXT;SLOP POS",
             "TRIG:COUN 5",
-            "SAMP:COUN 7",
-            "TRIG:DEL 100E-6",
-            "VOLT:DC:NPLC 1",
+            "SAMP:COUN 3",
+            "TRIG:DEL 1E-6",
+            "VOLT:DC:NPLC 0.5",
             "INITiate"
         ], delay=0.1)            
     
@@ -561,7 +562,7 @@ class Supervisor:
             raise ValueError("Microcontroller is not opened.")
 
         for phase_val in range(phase_init, phase_final, step):
-            msg = self.microcontroller.sendCommand("PHASE_SHIFT", "LEG2", phase_val)
+            msg = self.microcontroller.sendCommand("PHASE_SHIFT", "LEG2", phase_val, delay=self.delay_com)
             print(f"Set phase shift={phase_val}, msg={msg}")
 
     def microcontroller_repeat_get_line(self, num_times):
@@ -647,7 +648,7 @@ class Supervisor:
         time.sleep(delay)
         return float(result)
 
-    def power_supply_voltage_ramp_up(self, voltage: float, step_value: float, start_value=0, delay = 0.2):
+    def power_supply_voltage_ramp_up(self, voltage: float, step_value: float, start_value=0, delay = 0.1):
         """
         Ramps up the voltage of the HV power supply from start_value to 'voltage', 
         in steps of step_value, waiting self.timestep between steps.
@@ -673,7 +674,7 @@ class Supervisor:
             time.sleep(delay)
         time.sleep(delay)
 
-    def power_supply_voltage_ramp_down(self, start_voltage: float, end_value: float, step_value: float, delay = 0.2):
+    def power_supply_voltage_ramp_down(self, start_voltage: float, end_value: float, step_value: float, delay = 0.1):
         """
         Ramps down the voltage of the HV power supply from 'start_voltage' to 'end_value', 
         in negative increments (step_value < 0), waiting self.timestep between steps.
