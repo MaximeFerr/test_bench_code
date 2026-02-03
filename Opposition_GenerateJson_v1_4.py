@@ -106,7 +106,8 @@ if __name__ == "__main__":
         print(f"\n=== Génération pour {freq_khz} kHz ===")
 
         # Phase Shift Mode
-        Phi = np.round(180 * Ipeak[:, None] * InductorL * freq * 1e-6 / Vdc, decimals=0)  # in degrees
+        delta_I = Ipeak[:, None]*2  # phi is calculated with delta I, but we set the peak current that is switched
+        Phi = np.round(360 * delta_I * InductorL * freq * 1e-6 / Vdc, decimals=0)  # in degrees
         print(f"\nPhase shift steps for {freq_khz} kHz:\n{Phi}")
         folder1_path = 'PhaseShift'
         autoGenerateJson(base_config, folder1_path, Phi, Vdc, [freq], mode="Phase")
