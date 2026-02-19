@@ -65,6 +65,10 @@ class Supervisor:
         self.delay2 = self.config['delay2']
         self.delay3 = self.config['delay3']
         self.delay_com = self.config['delay_com']
+        self.dmm_init_delay = self.config.get('dmm_init_delay', 2)
+        self.dmm_cmd_delay = self.config.get('dmm_cmd_delay', 0.1)
+        self.power_supply_output_delay = self.config.get('power_supply_output_delay', 0.3)
+        self.power_supply_ramp_delay = self.config.get('power_supply_ramp_delay', 0.1)
 
         self.DutyPWM = self.config['DutyPWM']
         self.frequencyPWM = self.config['frequencyPWM']
@@ -424,7 +428,7 @@ class Supervisor:
             "TRIG:DEL 1E-6",# double check if TRIG:DEL:AUTO 0 is required or not!!!
             "CURR:DC:NPLC 0.5",
             "INITiate"
-        ], delay=0.1)
+        ], delay=self.dmm_cmd_delay)
         self.dmm_send_cmd(self.dmm_for_voltage, [
             "*RST",
             "CONF:VOLT:DC 200",
@@ -436,7 +440,7 @@ class Supervisor:
             "TRIG:DEL 1E-6",
             "VOLT:DC:NPLC 0.5",
             "INITiate"
-        ], delay=0.1)            
+        ], delay=self.dmm_cmd_delay)            
     
     def dmm_send_cmd(self, dmm, cmd_list: list[str], delay = 0.1):
         """
@@ -812,4 +816,3 @@ class Supervisor:
         # Write one json file with measurements for all frames
         with open(f'{self.result_output_path}/results.json', "w") as f:
             json.dump(meas_results, f, indent=4)
-

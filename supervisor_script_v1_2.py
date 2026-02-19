@@ -38,7 +38,7 @@ def runner(config_path):
         sup.oscilloscope_setup()
         sup.dmm_setup()
 
-        time.sleep(2) # Wait DMM initialized
+        time.sleep(sup.dmm_init_delay) # Wait DMM initialized
         print('Config OK')
 
 
@@ -47,11 +47,16 @@ def runner(config_path):
         #######################################
         # Example: HV power supply usage (we can ramp up, sweep phase, ramp down, etc.)
         # Turn on power supply
-        sup.power_supply_output_change("ON")
+        sup.power_supply_output_change("ON", delay=sup.power_supply_output_delay)
         print('HV supply ON')
 
         # Ramp up voltage
-        sup.power_supply_voltage_ramp_up(sup.VoltageWrite, sup.voltage_step, start_value=0)
+        sup.power_supply_voltage_ramp_up(
+            sup.VoltageWrite,
+            sup.voltage_step,
+            start_value=0,
+            delay=sup.power_supply_ramp_delay
+        )
         print("Source ramped up OK")
 
         # Sweep phase shift
@@ -59,7 +64,12 @@ def runner(config_path):
         print("Sweep phase done OK")
 
         # Ramp down
-        sup.power_supply_voltage_ramp_down(sup.VoltageWrite, -sup.voltage_step,-sup.voltage_step)
+        sup.power_supply_voltage_ramp_down(
+            sup.VoltageWrite,
+            -sup.voltage_step,
+            -sup.voltage_step,
+            delay=sup.power_supply_ramp_delay
+        )
         print("Source ramped down OK")
     except Exception as e:
             errors.append(f"Failed to finish run: {e}")
@@ -197,4 +207,3 @@ if __name__ == "__main__":
         runner(jsonfile)
         print("Done!\n\n")
         time.sleep(2)
-
