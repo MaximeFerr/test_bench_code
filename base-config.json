@@ -8,6 +8,8 @@
     "dmm_cmd_delay": 0.1,
     "dmm_current_nplc": 0.5,
     "dmm_voltage_nplc": 0.5,
+    "dmm_current_sample_count": 3,
+    "dmm_voltage_sample_count": 3,
     "power_supply_output_delay": 0.3,
     "power_supply_ramp_delay": 0.1,
 

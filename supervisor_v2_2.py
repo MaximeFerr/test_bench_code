@@ -69,6 +69,8 @@ class Supervisor:
         self.dmm_cmd_delay = self.config.get('dmm_cmd_delay', 0.1)
         self.dmm_current_nplc = self.config.get('dmm_current_nplc', 0.5)
         self.dmm_voltage_nplc = self.config.get('dmm_voltage_nplc', 0.5)
+        self.dmm_current_sample_count = self.config.get('dmm_current_sample_count', 3)
+        self.dmm_voltage_sample_count = self.config.get('dmm_voltage_sample_count', 3)
         self.power_supply_output_delay = self.config.get('power_supply_output_delay', 0.3)
         self.power_supply_ramp_delay = self.config.get('power_supply_ramp_delay', 0.1)
 
@@ -85,6 +87,8 @@ class Supervisor:
         self.PhaseInit = self.config['PhaseInit']
         self.PhaseFinal = self.config['PhaseFinal']
         self.PhaseStep = self.config['PhaseStep']
+        self.nb_points_i = self.config['nbPointsI']
+        self.nb_points_v = self.config['nbPointsV']
 
         self.DutyInit = self.config['DutyInit']
         self.DutyFinal = self.config['DutyFinal']
@@ -425,8 +429,8 @@ class Supervisor:
             "CURR:DC:AZ OFF",
             #"CONF:CURR:DC AUTO",
             "TRIG:SOUR EXT;SLOP POS",
-            "TRIG:COUN 5",
-            "SAMP:COUN 3",
+            f"TRIG:COUN {self.nb_points_i}",
+            f"SAMP:COUN {self.dmm_current_sample_count}",
             "TRIG:DEL 1E-6",# double check if TRIG:DEL:AUTO 0 is required or not!!!
             f"CURR:DC:NPLC {self.dmm_current_nplc}",
             "INITiate"
@@ -437,8 +441,8 @@ class Supervisor:
             "VOLT:DC:AZ OFF",
             #"CONF:VOLT:DC AUTO",
             "TRIG:SOUR EXT;SLOP POS",
-            "TRIG:COUN 5",
-            "SAMP:COUN 3",
+            f"TRIG:COUN {self.nb_points_i}",
+            f"SAMP:COUN {self.dmm_voltage_sample_count}",
             "TRIG:DEL 1E-6",
             f"VOLT:DC:NPLC {self.dmm_voltage_nplc}",
             "INITiate"
