@@ -67,6 +67,8 @@ class Supervisor:
         self.delay_com = self.config['delay_com']
         self.dmm_init_delay = self.config.get('dmm_init_delay', 2)
         self.dmm_cmd_delay = self.config.get('dmm_cmd_delay', 0.1)
+        self.dmm_current_nplc = self.config.get('dmm_current_nplc', 0.5)
+        self.dmm_voltage_nplc = self.config.get('dmm_voltage_nplc', 0.5)
         self.power_supply_output_delay = self.config.get('power_supply_output_delay', 0.3)
         self.power_supply_ramp_delay = self.config.get('power_supply_ramp_delay', 0.1)
 
@@ -426,7 +428,7 @@ class Supervisor:
             "TRIG:COUN 5",
             "SAMP:COUN 3",
             "TRIG:DEL 1E-6",# double check if TRIG:DEL:AUTO 0 is required or not!!!
-            "CURR:DC:NPLC 0.5",
+            f"CURR:DC:NPLC {self.dmm_current_nplc}",
             "INITiate"
         ], delay=self.dmm_cmd_delay)
         self.dmm_send_cmd(self.dmm_for_voltage, [
@@ -438,7 +440,7 @@ class Supervisor:
             "TRIG:COUN 5",
             "SAMP:COUN 3",
             "TRIG:DEL 1E-6",
-            "VOLT:DC:NPLC 0.5",
+            f"VOLT:DC:NPLC {self.dmm_voltage_nplc}",
             "INITiate"
         ], delay=self.dmm_cmd_delay)            
     
