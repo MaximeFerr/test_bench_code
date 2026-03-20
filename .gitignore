@@ -7,3 +7,5 @@ __pycache__/*
 venv/
 venv2/
 data/
+!Results_03_26/measurement_data/**/data/
+!Results_03_26/measurement_data/**/data/*.csv
