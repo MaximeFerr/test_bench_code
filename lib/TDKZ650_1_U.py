@@ -105,20 +105,20 @@ class TDKZ650_1_U:
 
 
     def power_supply_output_change(self, state: str, delay = 0.3):
-            """
-            Changes the output state of the HV power supply (e.g., 'ON' or 'OFF').
+        """
+        Changes the output state of the HV power supply (e.g., 'ON' or 'OFF').
 
-            Parameters
-            ----------
-            state : str
-                The desired output state, typically 'ON' or 'OFF'.
-            """
-            if self.hv_power_supply is None:
-                raise ValueError("HV power supply is not opened.")
+        Parameters
+        ----------
+        state : str
+            The desired output state, typically 'ON' or 'OFF'.
+        """
+        if self.hv_power_supply is None:
+            raise ValueError("HV power supply is not opened.")
 
-            cmd = f'OUTPut:STATe {state}'
-            self.hv_power_supply.write(cmd)
-            time.sleep(delay)
+        cmd = f'OUTPut:STATe {state}'
+        self.hv_power_supply.write(cmd)
+        time.sleep(delay)
 
     def power_supply_check_voltage(self, delay = 0.3) -> float:
         """
@@ -172,12 +172,19 @@ class TDKZ650_1_U:
             raise ValueError("HV power supply is not opened.")
 
         self.hv_power_supply.write('VOLTage:MODE FIX')
-        steps = np.arange(start_value, voltage + step_value, step_value)
+
+        reste = (voltage - start_value) % step_value
+        if reste != 0:
+            steps = np.arange(start_value, voltage - reste, step_value)
+            steps = np.append(steps, voltage)  # Ensure we end exactly at the target
+        else :
+            steps = np.arange(start_value, voltage + step_value, step_value)
+
         for x in steps:
             x2=round(x)
             cmd2 = f'VOLT:LEV {x2}'
             self.hv_power_supply.write(cmd2)
-            time.sleep(delay)
+            time.sleep(self.timestep)
         time.sleep(delay)
 
     def power_supply_voltage_ramp_down(self, start_voltage: float, end_value: float, step_value: float, delay = 0.1):
@@ -203,12 +210,15 @@ class TDKZ650_1_U:
             x2=round(x)
             cmd2 = f'VOLT:LEV {x2}'
             self.hv_power_supply.write(cmd2)
-            time.sleep(delay)
+            time.sleep(self.timestep)
         time.sleep(delay)
 
     def power_set_voltage(self, voltage: int, delay = 0.1):
         """
         Sets the voltage of the HV power supply.
+        WARNING: This method does not ramp the voltage, it sets it directly to the specified value. 
+        Be aware of potential damage to equipment or safety hazards if setting a high voltage suddenly.
+        Consider using the ramp methods for safer voltage changes and use this method only for small adjustments.
 
         Parameters
         ----------
@@ -226,8 +236,99 @@ class TDKZ650_1_U:
         self.hv_power_supply.write(cmd)
         time.sleep(delay)
 
+    def power_set_current(self, current: float, delay = 0.1):
+        """
+        Sets the current limit of the HV power supply.
+
+        Parameters
+        ----------
+        current : float
+            The current limit to set.
+        delay : float, optional
+            The delay between commands, by default 0.1 seconds.
+        """
+        if self.hv_power_supply is None:
+            raise ValueError("HV power supply is not opened.")
+
+        value = current
+        cmd = f'CURR:LEV {value}'
+        self.hv_power_supply.write(cmd)
+        time.sleep(delay)
+
+    def TDK_ramp_up_and_down_example(self): 
+        """
+        Example method demonstrating how to ramp up and down the voltage of the HV power supply.
+        This method is for demonstration purposes and should be adapted to specific use cases.
+        It includes error handling and ensures that the power supply is turned off in case of exceptions.
+        """
+        # ── 1. Open power supply ──────────────────────────────────
+        print("1. Opening TDK power supply...")
+        self.open_hv_power_supply()
+        print("   ✓ TDK power supply opened\n")
+ 
+        # ── 2. Set initial voltage to 0 V ───────
+        print("2. Setting initial voltage to 0 V...")
+        self.power_set_voltage(voltage=0, delay=self.power_supply_ramp_delay)
+        print("   ✓ Voltage set to 0 V\n")
+
+        # ── 3. Set current limit ───────
+        print(f"3. Setting current limit to {self.CurrentLimit}A...")
+        self.power_set_current(current=self.CurrentLimit) #default current limit 0.3A
+        print(f"   ✓ Current limit set to {self.CurrentLimit}A\n")
+ 
+        # ── 4. Enable TDK output ───────
+        print("4. Enabling TDK output...")
+        self.power_supply_output_change(state='ON', delay=self.power_supply_output_delay)
+        print("   ✓ Output ON\n")
+ 
+        # ── 5. Ramp up voltage ────────────────────────────────────
+        print(f"5. Ramping up to {self.VoltageWrite} V "
+              f"(step={self.voltage_step} V, delay={self.power_supply_ramp_delay} s)...")
+        self.power_supply_voltage_ramp_up(
+            voltage    = self.VoltageWrite,
+            step_value = self.voltage_step,
+            start_value= 0,
+            delay      = self.power_supply_ramp_delay
+        )
+        print("   ✓ Ramp-up complete\n")
+        
+        # Wait before ramping down 
+        time.sleep(2)
+        
+        # ── 6. Ramp down voltage ─────────────────────────────────
+        print(f"6. Ramping down to 0 V...")
+        self.power_supply_voltage_ramp_down(
+            start_voltage = self.VoltageWrite,
+            end_value     = 0,
+            step_value    = -self.voltage_step,
+            delay         = self.power_supply_ramp_delay
+        )
+        print("    ✓ Ramp-down complete\n")
+ 
+        # ── 7. Set voltage explicitly to 0 V ─────────────────────────────────
+        print("7. Setting voltage to 0 V...")
+        self.power_set_voltage(voltage=0, delay=self.power_supply_ramp_delay)
+        print("    ✓ Voltage set to 0 V\n")
+ 
+        # ── 8. Disable TDK output ─────────────────────────────────
+        print("8. Disabling TDK output...")
+        self.power_supply_output_change(state='OFF', delay=self.power_supply_output_delay)
+        print("    ✓ Output OFF\n")
+ 
+        # ── 9. Close instruments ─────────────────────────────────
+        print("9. Closing TDK power supply...")
+        self.close_hv_power_supply()
+        print("    ✓ TDK closed\n")
+
+
+
 
 def find_json_files(folder):
+    """
+    Recursively finds all JSON files in the specified folder and its subfolders.
+    Useful only for testing purposes to easily load configuration files without hardcoding paths.
+    """
+
     json_files = []
     for root, dirs, files in os.walk(folder):
         for file in files:
@@ -250,46 +351,8 @@ if __name__ == "__main__":
     tdk = TDKZ650_1_U(config_path=jsonlist[0])
     
     try:
-        # Open the HV power supply
-        print("\n1. Opening HV power supply...")
-        tdk.open_hv_power_supply()
-        print("   ✓ HV power supply opened successfully\n")
-        
-        # Set initial voltage to 0V
-        print("2. Setting initial voltage to 0V...")
-        tdk.power_set_voltage(voltage=0)
-        print("   ✓ Initial voltage set to 0V\n")
+        tdk.TDK_ramp_up_and_down_example()
 
-        # Enable the HV power supply output
-        tdk.power_supply_output_change("ON", delay=tdk.power_supply_output_delay)
-        print('HV supply ON')
-        
-        # Ramp up voltage        
-        print(f"4. Ramping up voltage to {tdk.VoltageWrite}V...")
-        tdk.power_supply_voltage_ramp_up(voltage=tdk.VoltageWrite, step_value=tdk.voltage_step, start_value=0, delay=tdk.power_supply_ramp_delay)
-        print("   ✓ Voltage ramp-up complete\n")
-
-        time.sleep(2)  # Stabilization delay before measurements
-        # ramp down voltage
-        print(f"5. Ramping down voltage to 0V...")
-        tdk.power_supply_voltage_ramp_down(start_voltage=tdk.VoltageWrite, end_value=0, step_value=-tdk.voltage_step, delay=tdk.power_supply_ramp_delay)
-        print("   ✓ Voltage ramp-down complete\n")
-
-        #disable output
-        print("6. Disabling HV power supply output...")
-        tdk.power_supply_output_change(state='OFF', delay=tdk.power_supply_output_delay)
-        print("   ✓ HV power supply output disabled\n")
-
-        # Set initial voltage to 0V
-        print("2. Setting initial voltage to 0V...")
-        tdk.power_set_voltage(voltage=0)
-        print("   ✓ Initial voltage set to 0V\n")
-
-        # Close the HV power supply
-        print("7. Closing HV power supply...")
-        tdk.close_hv_power_supply()
-        print("   ✓ HV power supply closed successfully\n")
-        
     except Exception as e:
         print(f"❌ Error: {e}\n")
         import traceback
