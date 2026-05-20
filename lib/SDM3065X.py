@@ -11,6 +11,8 @@ import pyvisa as visa
 import numpy as np
 import matplotlib.pyplot as plt
 
+from TDKZ650_1_U import TDKZ650_1_U
+
 
 class SDM3065X:
     """
@@ -21,25 +23,17 @@ class SDM3065X:
     
     Parameters
     ----------
+    dmmtype : str, optional
+        Type of DMM to initialize ("current", "voltage", or None for both).
     config_path : str, optional
         Path to JSON configuration file. If None, uses default parameters.
     dmm_current_addr : str, optional
         VISA address for current DMM. Default: from config or TCPIP0::169.254.126.119::inst0::INSTR
     dmm_voltage_addr : str, optional
         VISA address for voltage DMM. Default: from config or TCPIP0::169.254.126.120::inst0::INSTR
-    
-    Example
-    -------
-    >>> sdm = SDM3065X(config_path='base-config.json')
-    >>> sdm.open_all_dmm()
-    >>> sdm.dmm_setup()
-    >>> # ... measurements ...
-    >>> voltage_data = sdm.dmm_get_buffer(sdm.dmm_for_voltage)
-    >>> current_data = sdm.dmm_get_buffer(sdm.dmm_for_current)
-    >>> sdm.close_all_dmm()
     """
 
-    def __init__(self, config_path: str = None, dmm_current_addr: str = None, dmm_voltage_addr: str = None):
+    def __init__(self, dmmtype: str = None, config_path: str = None, dmm_current_addr: str = None, dmm_voltage_addr: str = None):
         """
         Initialize the SDM3065X DMM controller.
         
@@ -66,8 +60,13 @@ class SDM3065X:
             
             print(f"Config file found at {config_path}. Loading parameters...")
             # Load DMM addresses
-            self.dmm_for_current_name = dmm_current_addr or config.get('DMMforCurrent', 'TCPIP0::169.254.126.119::inst0::INSTR')
-            self.dmm_for_voltage_name = dmm_voltage_addr or config.get('DMMforVoltage', 'TCPIP0::169.254.126.120::inst0::INSTR')
+            if dmmtype == "current": 
+                self.dmm_for_current_name = dmm_current_addr or config.get('DMMforCurrent', 'TCPIP0::169.254.126.119::inst0::INSTR')
+            elif dmmtype == "voltage": 
+                self.dmm_for_voltage_name = dmm_voltage_addr or config.get('DMMforVoltage', 'TCPIP0::169.254.126.120::inst0::INSTR')
+            else:
+                self.dmm_for_voltage_name = dmm_voltage_addr or config.get('DMMforVoltage', 'TCPIP0::169.254.126.120::inst0::INSTR')
+                self.dmm_for_current_name = dmm_current_addr or config.get('DMMforCurrent', 'TCPIP0::169.254.126.119::inst0::INSTR')
             
             # Load DMM parameters
             self.dmm_init_delay = config.get('dmm_init_delay', 2)
@@ -77,12 +76,18 @@ class SDM3065X:
             self.dmm_current_sample_count = config.get('dmm_current_sample_count', 3)
             self.dmm_voltage_sample_count = config.get('dmm_voltage_sample_count', 3)
             self.nb_points_i = config.get('nbPointsI', 10)
+
+            self.trig_source = config.get('trigSource', 'IMM')
+            self.dmm_param_mode_lecture = config.get('dmm_param_mode_lecture', 'INITiate')
+            # {INTernal|EXTernal|TIMer|BUS|IMM|MANual|ECLock}
         else:
             print(f"Config file not found at {config_path}. Using default parameters.")
             # Default parameters if no config file
-            self.dmm_for_current_name = dmm_current_addr or 'TCPIP0::169.254.126.119::inst0::INSTR'
-            self.dmm_for_voltage_name = dmm_voltage_addr or 'TCPIP0::169.254.126.120::inst0::INSTR'
-            
+            if dmmtype == "current":
+                self.dmm_for_current_name = dmm_current_addr or 'TCPIP0::169.254.126.119::inst0::INSTR'
+            if dmmtype == "voltage":
+                self.dmm_for_voltage_name = dmm_voltage_addr or 'TCPIP0::169.254.126.120::inst0::INSTR'
+
             self.dmm_init_delay = 2
             self.dmm_cmd_delay = 0.1
             self.dmm_current_nplc = 0.5
@@ -90,10 +95,15 @@ class SDM3065X:
             self.dmm_current_sample_count = 3
             self.dmm_voltage_sample_count = 3
             self.nb_points_i = 10
+
+            self.trig_source = 'IMM'
+            # {INTernal|EXTernal|TIMer|BUS|IMM|MANual|ECLock}
+
+            self.dmm_param_mode_lecture = 'INITiate'
         
         print(f"SDM3065X controller initialized")
-        print(f"  Current DMM: {self.dmm_for_current_name}")
-        print(f"  Voltage DMM: {self.dmm_for_voltage_name}")
+        #print(f"  Current DMM: {self.dmm_for_current_name}")
+        #print(f"  Voltage DMM: {self.dmm_for_voltage_name}")
 
 #A tester
     def open_all_dmm(self):
@@ -182,34 +192,101 @@ class SDM3065X:
                 self.dmm_for_voltage = None
 
 
-    def dmm_setup(self):
+    def dmm_setup_current(self):
         # Configure DMMs (already opened in sup.dmm_for_current, sup.dmm_for_voltage)
         # For example, we can send SCPI commands to set them up
+        # self.dmm_send_cmd(self.dmm_for_current, [
+        #     "*RST",
+        #     "CONF:CURR:DC 0.2",
+        #     "CURR:DC:AZ OFF",
+        #     #"CONF:CURR:DC AUTO",
+        #     #"TRIG:SOUR EXT;SLOP POS",
+
+        #     f"TRIG:SOUR {self.trig_source};SLOP POS",
+
+        #     #TRIG:SOURce {INTernal|EXTernal|TIMer|BUS|IMM|MANual|ECLock};SLOP {POSitive|NEGative}
+        #     f"TRIG:COUN {self.nb_points_i}",
+        #     f"SAMP:COUN {self.dmm_current_sample_count}",
+        #     "TRIG:DEL 1E-6",# double check if TRIG:DEL:AUTO 0 is required or not!!!
+        #     f"CURR:DC:NPLC {self.dmm_current_nplc}",
+        #     "INITiate"
+        # ], delay=self.dmm_cmd_delay)
+
         self.dmm_send_cmd(self.dmm_for_current, [
             "*RST",
             "CONF:CURR:DC 0.2",
             "CURR:DC:AZ OFF",
             #"CONF:CURR:DC AUTO",
-            "TRIG:SOUR EXT;SLOP POS",
+            #"TRIG:SOUR EXT;SLOP POS",
+
+            f"TRIG:SOUR {self.trig_source};SLOP POS",
+
+            #TRIG:SOURce {INTernal|EXTernal|TIMer|BUS|IMM|MANual|ECLock};SLOP {POSitive|NEGative}
             f"TRIG:COUN {self.nb_points_i}",
             f"SAMP:COUN {self.dmm_current_sample_count}",
             "TRIG:DEL 1E-6",# double check if TRIG:DEL:AUTO 0 is required or not!!!
             f"CURR:DC:NPLC {self.dmm_current_nplc}",
             "INITiate"
         ], delay=self.dmm_cmd_delay)
+
+    def dmm_setup_voltage(self):
+        # self.dmm_send_cmd(self.dmm_for_voltage, [
+        #     "*RST",
+        #     "CONF:VOLT:DC 200",
+        #     "VOLT:DC:AZ OFF",
+        #     #"CONF:VOLT:DC AUTO",
+
+
+        #     f"TRIG:SOUR {self.trig_source};SLOP POS",
+
+
+        #     #TRIG:SOURce {EXTernal|TIMer|BUS|IMM|MANual|ECLock};SLOP {POSitive|NEGative}
+        #     f"TRIG:COUN {self.nb_points_i}",
+        #     f"SAMP:COUN {self.dmm_voltage_sample_count}",
+        #     "TRIG:DEL 1E-6",
+        #     f"VOLT:DC:NPLC {self.dmm_voltage_nplc}",
+        #     "INITiate"
+        # ], delay=self.dmm_cmd_delay)  
+
         self.dmm_send_cmd(self.dmm_for_voltage, [
             "*RST",
             "CONF:VOLT:DC 200",
             "VOLT:DC:AZ OFF",
             #"CONF:VOLT:DC AUTO",
-            "TRIG:SOUR EXT;SLOP POS",
+
+
+            f"TRIG:SOUR {self.trig_source};SLOP POS",
+
+
+            #TRIG:SOURce {EXTernal|TIMer|BUS|IMM|MANual|ECLock};SLOP {POSitive|NEGative}
             f"TRIG:COUN {self.nb_points_i}",
             f"SAMP:COUN {self.dmm_voltage_sample_count}",
             "TRIG:DEL 1E-6",
             f"VOLT:DC:NPLC {self.dmm_voltage_nplc}",
-            "INITiate"
-        ], delay=self.dmm_cmd_delay)            
+            f"{self.dmm_param_mode_lecture}"
+        ], delay=self.dmm_cmd_delay)           
     
+
+    def dmm_setup(self, dmmtype: str = None):
+        """
+        Generalized setup function for a DMM resource, allowing configuration of trigger source and other parameters.
+        This can be used to set up either the current or voltage DMM with custom settings.
+
+        Parameters
+        ----------
+        dmm_type : str
+            The type of DMM to set up ('current' or 'voltage').
+        """
+
+        if(dmmtype == "current"):
+            self.dmm_setup_current()
+
+        elif(dmmtype == "voltage"):
+            self.dmm_setup_voltage()
+        else:
+            raise ValueError("Invalid dmmtype. Must be 'current' or 'voltage' in function dmm_setup.")
+
+
     def dmm_send_cmd(self, dmm, cmd_list: list[str], delay = 0.1):
         """
         Sends a list of SCPI commands to a given DMM resource, printing them for visibility.
@@ -231,6 +308,8 @@ class SDM3065X:
             dmm.write(cmd)
             print(f"\t - {cmd}")
             time.sleep(delay)
+
+
 
     def dmm_get_buffer(self, dmm, wait_meas_complete: bool = True) -> list[float]:
         """
@@ -306,12 +385,26 @@ class SDM3065X:
     
 
 def find_json_files(folder):
+    """
+    Recursively finds all JSON files in the specified folder and its subfolders.
+    Useful only for testing purposes to easily load configuration files without hardcoding paths.
+    """
     json_files = []
     for root, dirs, files in os.walk(folder):
         for file in files:
             if file.endswith('.json'):
                 json_files.append(os.path.relpath(os.path.join(root, file), "./"))
     return json_files
+
+def TimeStamp():
+    # Generate a time-based string here
+    now = datetime.now()
+
+    # Create a timestamp like "HH_MM_SS-DD_MM_YYYY"
+    day = now.strftime("%d_%m_%Y")
+    current_time = now.strftime("%H_%M_%S")
+    Timestamp = f"{current_time}-{day}"
+    return Timestamp
 
 # ======================== USAGE EXAMPLE ========================
 if __name__ == "__main__":
@@ -327,32 +420,53 @@ if __name__ == "__main__":
 
     # Initialize with configuration file
     
-    sdm = SDM3065X(config_path=jsonlist[0])
+    sdm_current = SDM3065X(dmmtype="current", config_path=jsonlist[0])
+    sdm_voltage = SDM3065X(dmmtype="voltage", config_path=jsonlist[0])
+
+    tdk = TDKZ650_1_U(config_path=jsonlist[0])
+
+# Override some parameters for testing purposes
+    sdm_voltage.nb_points_i = 250
+    sdm_voltage.dmm_voltage_sample_count = 2 
+    sdm_voltage.dmm_param_mode_lecture = 'READ?' # 'INITiate' or 'SINGle' or READ? (lecture mode for voltage DMM, to be tested)
+    sdm_voltage.dmm_voltage_nplc = 0.5
 
     try:
         # Open both DMMs
         print("\n1. Opening DMMs...")
-        sdm.open_all_dmm()
+        sdm_current.open_dmm_for_current()
+        sdm_voltage.open_dmm_for_voltage()
         print("   ✓ DMMs opened successfully\n")
         
         # Configure for measurements
         print("2. Configuring DMMs for DC measurements...")
-        sdm.dmm_setup()
+        sdm_current.dmm_setup("current")
+        sdm_voltage.dmm_setup("voltage")
         print("   ✓ DMM setup complete!\n")
         
         # Wait for initialization
-        print(f"3. Waiting for initialization ({sdm.dmm_init_delay}s)...")
-        time.sleep(sdm.dmm_init_delay)
+        print(f"3. Waiting for initialization ({sdm_current.dmm_init_delay}s)...")
+        time.sleep(sdm_current.dmm_init_delay)
         print("   ✓ Ready for measurements\n")
         
         print("4. Measurements would be triggered by external signal (oscilloscope)...")
         print("   Status: Waiting for trigger...\n")
+
+        tdk.TDK_ramp_up_and_down_example()
+
+        # sdm_voltage.dmm_abort_measure(sdm_voltage.dmm_for_voltage)
+        # sdm_voltage.dmm_abort_measure(sdm_voltage.dmm_for_voltage)
         
-        # Get data from buffers (when data is available)
-        # voltage_data = sdm.dmm_get_buffer(sdm.dmm_for_voltage)
-        # current_data = sdm.dmm_get_buffer(sdm.dmm_for_current)
-        # print(f"   Voltage measurements: {voltage_data}")
+        # Get data from buffers (when data is available) 
+        voltage_data = sdm_voltage.dmm_get_buffer(sdm_voltage.dmm_for_voltage)
+        # current_data = sdm_current.dmm_get_buffer(sdm_current.dmm_for_current)
+        print(f"   Voltage measurements: {voltage_data}")
         # print(f"   Current measurements: {current_data}\n")
+
+        plt.figure()
+        plt.title("Voltage Data Points")
+        plt.plot(voltage_data, marker='o', linestyle='none')
+        plt.savefig('01-Voltage-' + TimeStamp() + '.svg', format='svg', dpi=300)
         
     except Exception as e:
         print(f"❌ Error: {e}\n")
@@ -361,8 +475,12 @@ if __name__ == "__main__":
     finally:
         # Always cleanup
         print("5. Cleanup...")
-        sdm.cleanup()
+        
+        sdm_current.close_dmm_for_current()
+        time.sleep(0.3)
+        sdm_voltage.close_dmm_for_voltage()
+        time.sleep(0.3)
         print("   ✓ Resources released.\n")
         print("="*60)
-        print("  Example completed")
+        print("  Example SDM3065X completed")
         print("="*60 + "\n")
