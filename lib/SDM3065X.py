@@ -12,6 +12,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from TDKZ650_1_U import TDKZ650_1_U
+from tools import TOOL
+
 
 
 class SDM3065X:
@@ -192,82 +194,111 @@ class SDM3065X:
                 self.dmm_for_voltage = None
 
 
-    def dmm_setup_current(self):
-        # Configure DMMs (already opened in sup.dmm_for_current, sup.dmm_for_voltage)
-        # For example, we can send SCPI commands to set them up
-        # self.dmm_send_cmd(self.dmm_for_current, [
-        #     "*RST",
-        #     "CONF:CURR:DC 0.2",
-        #     "CURR:DC:AZ OFF",
-        #     #"CONF:CURR:DC AUTO",
-        #     #"TRIG:SOUR EXT;SLOP POS",
-
-        #     f"TRIG:SOUR {self.trig_source};SLOP POS",
-
-        #     #TRIG:SOURce {INTernal|EXTernal|TIMer|BUS|IMM|MANual|ECLock};SLOP {POSitive|NEGative}
-        #     f"TRIG:COUN {self.nb_points_i}",
-        #     f"SAMP:COUN {self.dmm_current_sample_count}",
-        #     "TRIG:DEL 1E-6",# double check if TRIG:DEL:AUTO 0 is required or not!!!
-        #     f"CURR:DC:NPLC {self.dmm_current_nplc}",
-        #     "INITiate"
-        # ], delay=self.dmm_cmd_delay)
-
+    def dmm_setup_current_testbench(self):
+        """Test bench auto setup, Sets up the DMM for current measurements with the configured parameters.
+        This method sends a series of SCPI commands to the current DMM to configure it for DC current measurements
+        """
         self.dmm_send_cmd(self.dmm_for_current, [
             "*RST",
-            "CONF:CURR:DC 0.2",
+            "CONF:CURR:DC 2",
             "CURR:DC:AZ OFF",
-            #"CONF:CURR:DC AUTO",
-            #"TRIG:SOUR EXT;SLOP POS",
-
-            f"TRIG:SOUR {self.trig_source};SLOP POS",
-
-            #TRIG:SOURce {INTernal|EXTernal|TIMer|BUS|IMM|MANual|ECLock};SLOP {POSitive|NEGative}
+            "TRIG:SOUR EXT;SLOP POS",
             f"TRIG:COUN {self.nb_points_i}",
             f"SAMP:COUN {self.dmm_current_sample_count}",
             "TRIG:DEL 1E-6",# double check if TRIG:DEL:AUTO 0 is required or not!!!
             f"CURR:DC:NPLC {self.dmm_current_nplc}",
             "INITiate"
         ], delay=self.dmm_cmd_delay)
-
-    def dmm_setup_voltage(self):
-        # self.dmm_send_cmd(self.dmm_for_voltage, [
-        #     "*RST",
-        #     "CONF:VOLT:DC 200",
-        #     "VOLT:DC:AZ OFF",
-        #     #"CONF:VOLT:DC AUTO",
-
-
-        #     f"TRIG:SOUR {self.trig_source};SLOP POS",
-
-
-        #     #TRIG:SOURce {EXTernal|TIMer|BUS|IMM|MANual|ECLock};SLOP {POSitive|NEGative}
-        #     f"TRIG:COUN {self.nb_points_i}",
-        #     f"SAMP:COUN {self.dmm_voltage_sample_count}",
-        #     "TRIG:DEL 1E-6",
-        #     f"VOLT:DC:NPLC {self.dmm_voltage_nplc}",
-        #     "INITiate"
-        # ], delay=self.dmm_cmd_delay)  
-
+    
+    def dmm_setup_voltage_testbench(self):
         self.dmm_send_cmd(self.dmm_for_voltage, [
             "*RST",
             "CONF:VOLT:DC 200",
             "VOLT:DC:AZ OFF",
-            #"CONF:VOLT:DC AUTO",
-
-
-            f"TRIG:SOUR {self.trig_source};SLOP POS",
-
-
-            #TRIG:SOURce {EXTernal|TIMer|BUS|IMM|MANual|ECLock};SLOP {POSitive|NEGative}
+            "TRIG:SOUR EXT;SLOP POS",
             f"TRIG:COUN {self.nb_points_i}",
             f"SAMP:COUN {self.dmm_voltage_sample_count}",
             "TRIG:DEL 1E-6",
             f"VOLT:DC:NPLC {self.dmm_voltage_nplc}",
-            f"{self.dmm_param_mode_lecture}"
-        ], delay=self.dmm_cmd_delay)           
+            "INITiate"
+        ], delay=self.dmm_cmd_delay) 
+
+    # def dmm_setup_current_(self):
+    #     # Configure DMMs (already opened in sup.dmm_for_current, sup.dmm_for_voltage)
+    #     # For example, we can send SCPI commands to set them up
+    #     # self.dmm_send_cmd(self.dmm_for_current, [
+    #     #     "*RST",
+    #     #     "CONF:CURR:DC 0.2",
+    #     #     "CURR:DC:AZ OFF",
+    #     #     #"CONF:CURR:DC AUTO",
+    #     #     #"TRIG:SOUR EXT;SLOP POS",
+
+    #     #     f"TRIG:SOUR {self.trig_source};SLOP POS",
+
+    #     #     #TRIG:SOURce {INTernal|EXTernal|TIMer|BUS|IMM|MANual|ECLock};SLOP {POSitive|NEGative}
+    #     #     f"TRIG:COUN {self.nb_points_i}",
+    #     #     f"SAMP:COUN {self.dmm_current_sample_count}",
+    #     #     "TRIG:DEL 1E-6",# double check if TRIG:DEL:AUTO 0 is required or not!!!
+    #     #     f"CURR:DC:NPLC {self.dmm_current_nplc}",
+    #     #     "INITiate"
+    #     # ], delay=self.dmm_cmd_delay)
+
+    #     self.dmm_send_cmd(self.dmm_for_current, [
+    #         "*RST",
+    #         "CONF:CURR:DC 0.2",
+    #         "CURR:DC:AZ OFF",
+    #         #"CONF:CURR:DC AUTO",
+    #         #"TRIG:SOUR EXT;SLOP POS",
+
+    #         f"TRIG:SOUR {self.trig_source};SLOP POS",
+
+    #         #TRIG:SOURce {INTernal|EXTernal|TIMer|BUS|IMM|MANual|ECLock};SLOP {POSitive|NEGative}
+    #         f"TRIG:COUN {self.nb_points_i}",
+    #         f"SAMP:COUN {self.dmm_current_sample_count}",
+    #         "TRIG:DEL 1E-6",# double check if TRIG:DEL:AUTO 0 is required or not!!!
+    #         f"CURR:DC:NPLC {self.dmm_current_nplc}",
+    #         "INITiate"
+    #     ], delay=self.dmm_cmd_delay)
+
+    # def dmm_setup_voltage(self):
+    #     # self.dmm_send_cmd(self.dmm_for_voltage, [
+    #     #     "*RST",
+    #     #     "CONF:VOLT:DC 200",
+    #     #     "VOLT:DC:AZ OFF",
+    #     #     #"CONF:VOLT:DC AUTO",
+
+
+    #     #     f"TRIG:SOUR {self.trig_source};SLOP POS",
+
+
+    #     #     #TRIG:SOURce {EXTernal|TIMer|BUS|IMM|MANual|ECLock};SLOP {POSitive|NEGative}
+    #     #     f"TRIG:COUN {self.nb_points_i}",
+    #     #     f"SAMP:COUN {self.dmm_voltage_sample_count}",
+    #     #     "TRIG:DEL 1E-6",
+    #     #     f"VOLT:DC:NPLC {self.dmm_voltage_nplc}",
+    #     #     "INITiate"
+    #     # ], delay=self.dmm_cmd_delay)  
+
+    #     self.dmm_send_cmd(self.dmm_for_voltage, [
+    #         "*RST",
+    #         "CONF:VOLT:DC 200",
+    #         "VOLT:DC:AZ OFF",
+    #         #"CONF:VOLT:DC AUTO",
+
+
+    #         f"TRIG:SOUR {self.trig_source};SLOP POS",
+
+
+    #         #TRIG:SOURce {EXTernal|TIMer|BUS|IMM|MANual|ECLock};SLOP {POSitive|NEGative}
+    #         f"TRIG:COUN {self.nb_points_i}",
+    #         f"SAMP:COUN {self.dmm_voltage_sample_count}",
+    #         "TRIG:DEL 1E-6",
+    #         f"VOLT:DC:NPLC {self.dmm_voltage_nplc}",
+    #         f"{self.dmm_param_mode_lecture}"
+    #     ], delay=self.dmm_cmd_delay)           
     
 
-    def dmm_setup(self, dmmtype: str = None):
+    def dmm_setup_testbench(self, dmmtype: str = None):
         """
         Generalized setup function for a DMM resource, allowing configuration of trigger source and other parameters.
         This can be used to set up either the current or voltage DMM with custom settings.
@@ -279,10 +310,10 @@ class SDM3065X:
         """
 
         if(dmmtype == "current"):
-            self.dmm_setup_current()
+            self.dmm_setup_current_testbench()
 
         elif(dmmtype == "voltage"):
-            self.dmm_setup_voltage()
+            self.dmm_setup_voltage_testbench()
         else:
             raise ValueError("Invalid dmmtype. Must be 'current' or 'voltage' in function dmm_setup.")
 
@@ -363,7 +394,6 @@ class SDM3065X:
         dmm.write('ABORt')
         time.sleep(delay)
 
-#  A tester
     def cleanup(self):
         """
         Closes all open resources including both DMMs and the PyVISA resource manager.

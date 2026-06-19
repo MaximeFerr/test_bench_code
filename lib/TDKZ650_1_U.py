@@ -11,6 +11,8 @@ import pyvisa as visa
 import numpy as np
 import matplotlib.pyplot as plt
 
+from tools import TOOL
+
 
 class TDKZ650_1_U:
     """
@@ -320,21 +322,6 @@ class TDKZ650_1_U:
         self.close_hv_power_supply()
         print("    ✓ TDK closed\n")
 
-
-
-
-def find_json_files(folder):
-    """
-    Recursively finds all JSON files in the specified folder and its subfolders.
-    Useful only for testing purposes to easily load configuration files without hardcoding paths.
-    """
-
-    json_files = []
-    for root, dirs, files in os.walk(folder):
-        for file in files:
-            if file.endswith('.json'):
-                json_files.append(os.path.relpath(os.path.join(root, file), "./"))
-    return json_files
 
 # ======================== USAGE EXAMPLE ========================
 if __name__ == "__main__":

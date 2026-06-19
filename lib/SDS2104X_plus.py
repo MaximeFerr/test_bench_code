@@ -14,6 +14,7 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 
 from TDKZ650_1_U import TDKZ650_1_U
+from tools import TOOL
 
 
 class SDS2104X_plus:
@@ -484,14 +485,6 @@ class SDS2104X_plus:
         self.oscilloscope_save_data('C3', name)
         self.oscilloscope_save_data('C4', name)
 
-# ========================  ========================
-def find_json_files(folder):
-    json_files = []
-    for root, dirs, files in os.walk(folder):
-        for file in files:
-            if file.endswith('.json'):
-                json_files.append(os.path.relpath(os.path.join(root, file), "./"))
-    return json_files
 
 # ======================== USAGE EXAMPLE ========================
 if __name__ == "__main__":

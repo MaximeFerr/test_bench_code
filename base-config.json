@@ -14,7 +14,7 @@
     "power_supply_ramp_delay": 0.1,
 
     "DutyPWM": 0.485,
-    "frequencyPWM": [80000, 100000,125000],
+    "frequencyPWM": [80000, 100000],
     "DeadTimePWM": 300,
     "VoltageLimit": 100,
     "CurrentLimit": 0.3,
