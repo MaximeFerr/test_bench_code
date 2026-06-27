@@ -13,8 +13,8 @@ import math
 from datetime import datetime
 import matplotlib.pyplot as plt
 
-from TDKZ650_1_U import TDKZ650_1_U
-from tools import TOOL
+#from TDKZ650_1_U import TDKZ650_1_U
+#from tools import TOOL
 
 
 class SDS2104X_plus:
@@ -22,7 +22,7 @@ class SDS2104X_plus:
     Class to manage SDS2104X_plus resources.
     """
 
-    def __init__(self, config_path: str = None):
+    def __init__(self, config_path: str = None, ressource_manager: visa.ResourceManager = None):
         """
         Initialize the SDS2104X_plus.
         
@@ -33,7 +33,12 @@ class SDS2104X_plus:
         """
 
         # Create PyVISA Resource Manager
-        self.rm = visa.ResourceManager()
+        if ressource_manager is None:
+            #self.rm = visa.ResourceManager()
+            self.rm = None
+        else:
+            self.rm = ressource_manager
+            print("RM sds")
         
         self.oscilloscope = None
         self.oscilloscope_name = 'USB0::0xF4EC::0x1011::SDS2PDDX6R0968::INSTR'

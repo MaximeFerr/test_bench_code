@@ -11,7 +11,7 @@ import pyvisa as visa
 import numpy as np
 import matplotlib.pyplot as plt
 
-from tools import TOOL
+#from tools import TOOL
 
 
 class TDKZ650_1_U:
@@ -19,7 +19,7 @@ class TDKZ650_1_U:
     Class to manage TDK_Lambda_Z650_1_U resources.
     """
 
-    def __init__(self, config_path: str = None):
+    def __init__(self, config_path: str = None, ressource_manager: visa.ResourceManager = None):
         """
         Initialize the TDK_Lambda_Z650_1_U.
         
@@ -30,9 +30,16 @@ class TDKZ650_1_U:
         """
 
         # Create PyVISA Resource Manager
-        self.rm = visa.ResourceManager()
-        
+        if ressource_manager is None:
+            #self.rm = visa.ResourceManager()
+            self.rm = None
+        else:
+            self.rm = ressource_manager
+            print("RM tdk")
+
         self.hv_power_supply = None
+        
+        print(f" === config path : {config_path}")
         
         # Load configuration if provided
         if config_path and os.path.exists(config_path):
@@ -68,6 +75,31 @@ class TDKZ650_1_U:
         if self.hv_power_supply is not None:
             print("HV power supply is already opened.")
             return
+        
+        # Détection automatique des ports série disponibles
+        instruments = self.rm.list_resources()
+
+        if not instruments:
+                print("Alim TDK non détectée. Aucun port série disponible.")
+                return False
+
+        for res in instruments:
+            if "ttyACM" in res or "ASRL" in res:
+                try:
+                    device = self.rm.open_resource(res, query_delay=0.5)
+                    device.read_termination = '\n'
+                    device.write_termination = '\n'
+                    device.timeout = 1500  # Timeout court pour ne pas bloquer trop longtemps
+                        
+                    idn = device.query("*IDN?")
+                    device.close()
+                    
+                    if "TDK-LAMBDA" in idn.upper():
+                        self.hv_power_supply_name = res
+                        print(f" -> Alimentation TDK trouvée sur le port : {self.hv_power_supply_name}")
+                except Exception:
+                    continue
+            
         try:
             self.hv_power_supply = self.rm.open_resource(self.hv_power_supply_name, query_delay=0.5)
             # Ajout Nico - à tester
@@ -105,6 +137,14 @@ class TDKZ650_1_U:
             finally:
                 self.hv_power_supply = None
 
+    def setup_hv_power_supply(self):
+        """
+        Sets up the HV power supply.
+        """
+        self.power_set_current(current=self.CurrentLimit, delay=0.2) #set the current limit of the power supply
+        self.power_set_voltage(voltage=0, delay=0.2) #set the voltage to 0V before starting the ramp up (safety measure)
+
+
 
     def power_supply_output_change(self, state: str, delay = 0.3):
         """
@@ -121,6 +161,8 @@ class TDKZ650_1_U:
         cmd = f'OUTPut:STATe {state}'
         self.hv_power_supply.write(cmd)
         time.sleep(delay)
+    
+
 
     def power_supply_check_voltage(self, delay = 0.3) -> float:
         """
@@ -331,8 +373,9 @@ if __name__ == "__main__":
     print("\n" + "="*60)
     print("  TDKZ650_1_U Power Supply Controller - Example Usage")
     print("="*60 + "\n")
-    
-    jsonlist = find_json_files("../PhaseShift")
+    tool = TOOL()
+
+    jsonlist = tool.find_json_files("../PhaseShift")
 
     # Initialize with configuration file
     tdk = TDKZ650_1_U(config_path=jsonlist[0])

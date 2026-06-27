@@ -11,8 +11,8 @@ import pyvisa as visa
 import numpy as np
 import matplotlib.pyplot as plt
 
-from TDKZ650_1_U import TDKZ650_1_U
-from tools import TOOL
+#from TDKZ650_1_U import TDKZ650_1_U
+#from tools import TOOL
 
 
 
@@ -35,7 +35,7 @@ class SDM3065X:
         VISA address for voltage DMM. Default: from config or TCPIP0::169.254.126.120::inst0::INSTR
     """
 
-    def __init__(self, dmmtype: str = None, config_path: str = None, dmm_current_addr: str = None, dmm_voltage_addr: str = None):
+    def __init__(self, dmmtype: str = None, config_path: str = None, dmm_current_addr: str = None, dmm_voltage_addr: str = None, ressource_manager: visa.ResourceManager = None):
         """
         Initialize the SDM3065X DMM controller.
         
@@ -49,8 +49,13 @@ class SDM3065X:
             Override voltage DMM address
         """
         # Create PyVISA Resource Manager
-        self.rm = visa.ResourceManager()
-        
+        if ressource_manager is None:
+            #self.rm = visa.ResourceManager()
+            self.rm = None
+        else:
+            self.rm = ressource_manager
+            print("RM sdm")
+
         # Initialize DMM resource attributes
         self.dmm_for_current = None
         self.dmm_for_voltage = None
@@ -200,7 +205,7 @@ class SDM3065X:
         """
         self.dmm_send_cmd(self.dmm_for_current, [
             "*RST",
-            "CONF:CURR:DC 2",
+            "CONF:CURR:DC 0.2",
             "CURR:DC:AZ OFF",
             "TRIG:SOUR EXT;SLOP POS",
             f"TRIG:COUN {self.nb_points_i}",
@@ -377,7 +382,12 @@ class SDM3065X:
             time.sleep(2)
 
         # handle the #nxxx prefix
+        print(f"dmm_get_buffer Debug buffer_str : {buffer_str}")
+        
         digits = int(buffer_str[1])
+        
+        print(f"dmm_get_buffer Debug digits : {digits}")
+        
         return [float(e) for e in buffer_str[digits + 2:].strip().split(',')]
 
     def dmm_abort_measure(self, dmm, delay = 0.2):
@@ -470,8 +480,8 @@ if __name__ == "__main__":
         
         # Configure for measurements
         print("2. Configuring DMMs for DC measurements...")
-        sdm_current.dmm_setup("current")
-        sdm_voltage.dmm_setup("voltage")
+        sdm_current.dmm_setup_current_testbench()
+        sdm_voltage.dmm_setup_voltage_testbench()
         print("   ✓ DMM setup complete!\n")
         
         # Wait for initialization

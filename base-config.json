@@ -26,7 +26,7 @@
     "DMMforVoltage": "TCPIP0::169.254.126.120::inst0::INSTR",
     "AddressOSCILLO": "TCPIP0::169.254.186.255::inst0::INSTR",
     
-    "SaveEachFramePICTURE": 0,
+    "SaveEachFramePICTURE": 1,
     "SaveEachFrameDATA": 0,
     "ScopeAutoMeasure": [
         {
@@ -46,8 +46,8 @@
     "Sequence": 6,
     "Imin": 1,
     "Imax": 6,
-    "Vmin": 40,
-    "Vmax": 60,
+    "Vmin": 20,
+    "Vmax": 30,
     "nbPointsI": 6,
     "nbPointsV": 2,
     "PhaseInit": 0,

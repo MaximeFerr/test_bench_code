@@ -33,7 +33,7 @@ class Supervisor:
       3) Handle data (plotting, CSV export, etc.).
     """
 
-    def __init__(self, config_path: str = "parameters.json", sdm_voltage=None, sdm_current=None, sds_oscilloscope=None, tdk_power_supply=None): 
+    def __init__(self, config_path: str = "parameters.json", sdm_voltage=None, sdm_current=None, sds_oscilloscope=None, tdk_power_supply=None, ressource_manager: visa.ResourceManager = None): 
         """
         Constructor to initialize the Supervisor class.
         
@@ -65,6 +65,7 @@ class Supervisor:
         self.multimeter_voltage = sdm_voltage
         self.base_oscilloscope = sds_oscilloscope
         self.power_supply = tdk_power_supply
+        self.microcontroller = None  
 
 
         self.delay = self.config['delay']
@@ -91,9 +92,9 @@ class Supervisor:
         # self.VoltageWrite = self.config['VoltageWrite']
         # self.timestep = self.config['timestep']
         # self.voltage_step = self.config['voltage_step']
-        # self.PhaseInit = self.config['PhaseInit']
-        # self.PhaseFinal = self.config['PhaseFinal']
-        # self.PhaseStep = self.config['PhaseStep']
+        self.PhaseInit = self.config['PhaseInit']
+        self.PhaseFinal = self.config['PhaseFinal']
+        self.PhaseStep = self.config['PhaseStep']
         # self.nb_points_i = self.config['nbPointsI']
         # self.nb_points_v = self.config['nbPointsV']
 
@@ -118,15 +119,26 @@ class Supervisor:
 
 
         # 3. Create a single resource manager instance
-        self.rm = visa.ResourceManager()
+
+        # Create PyVISA Resource Manager
+        if ressource_manager is None:
+            #self.rm = visa.ResourceManager()
+            self.rm = None
+        else:
+            self.rm = ressource_manager
+            print("RM supervisor")
+
 
         # We store the microcontroller instance here (None if not opened yet)
         # Attributes to store open device resources
-        self.hv_power_supply = None
-        self.dmm_for_current = None
-        self.dmm_for_voltage = None
-        self.oscilloscope = None
-        self.microcontroller = None
+        # self.hv_power_supply = None
+        # self.dmm_for_current = None
+        # self.dmm_for_voltage = None
+        # self.oscilloscope = None
+        # self.microcontroller = None
+
+
+
 
     # -------------------------------------------------
     # PART 1: Device Management (Open/Close)
@@ -142,12 +154,30 @@ class Supervisor:
         self.multimeter_voltage.open_dmm_for_voltage()
         time.sleep(0.5)
         self.power_supply.open_hv_power_supply()
-        time.sleep(0.5)
-        #self.oscilloscope.open_oscilloscope()
-        time.sleep(0.5)
+        time.sleep(2)
         self.open_microcontroller()
         time.sleep(0.5)
 
+        self.base_oscilloscope.open_oscilloscope()
+        time.sleep(0.5)
+
+    def setup_all_devices(self):
+        """
+        Setups all devices (DMMs, oscilloscope, microcontroller & power supply).
+        """
+        self.multimeter_current.dmm_setup_current_testbench()
+        time.sleep(0.5)
+        self.multimeter_voltage.dmm_setup_voltage_testbench()
+        time.sleep(self.multimeter_current.dmm_init_delay) # Wait DMM initialized
+        
+        self.base_oscilloscope.oscilloscope_setup()
+        time.sleep(0.5)
+        
+        self.power_supply.setup_hv_power_supply()
+        time.sleep(0.5)
+        
+        self.microcontroller_setup()
+        time.sleep(0.5)
 
     def close_all_devices(self):
         """
@@ -167,7 +197,7 @@ class Supervisor:
         except Exception as e:
             errors.append(f"Failed to close DMM for voltage: {e}")
         try:
-            self.oscilloscope.close_oscilloscope()
+            self.base_oscilloscope.close_oscilloscope()
         except Exception as e:
             errors.append(f"Failed to close oscilloscope: {e}")
         try:
@@ -222,60 +252,6 @@ class Supervisor:
         else:
             print("Microcontroller is not opened.")
 
-    # -------------------------------------------------
-    # PART 2: Utility Methods (export, plot)
-    # -------------------------------------------------
-    def TimeStamp(self):
-        # Generate a time-based string here
-        now = datetime.now()
-
-        # Create a timestamp like "HH_MM_SS-DD_MM_YYYY"
-        day = now.strftime("%d_%m_%Y")
-        current_time = now.strftime("%H_%M_%S")
-        Timestamp = f"{current_time}-{day}"
-        return Timestamp
-    
-    def export_result_to_csv(self, data_string: str, extra_name: str = None):
-        """
-        Exports the provided data string to a CSV file named with a timestamp
-        and optionally an extra string in the filename.
-
-        Filename formats:
-        - Without extra_name: "csv-{timestamp}.csv"
-        - With extra_name:    "csv-{timestamp}-{extra_name}.csv"
-
-        Parameters
-        ----------
-        data_string : str
-            The data (e.g., comma-separated values) to write to the CSV file.
-        extra_name : str, optional
-            Additional string appended to the filename, e.g., "_Current".
-            If None, no extra string is appended.
-        """
-        # Generate a time-based string here
-        stamp = self.TimeStamp()
-
-        # Construct filename depending on whether extra_name is provided
-        if extra_name:
-            filename = f"csv-{stamp}-{extra_name}.csv"
-        else:
-            filename = f"csv-{stamp}.csv"
-
-        # Write the data to the file
-        with open(os.path.join(self.result_output_path,filename), 'w') as f:
-            f.write(data_string)
-
-        print(f"CSV exported to {filename}")
-
-
-    def plot_values(self, data_string: str):
-        """
-        Plots a comma-separated string of numeric data.
-        """
-        data_formatted = [float(i) for i in data_string.split(",")]
-        plt.plot(data_formatted)
-        plt.ylabel('current')
-        plt.show()
 
     # -------------------------------------------------
     # PART 3: Instrument Identification
