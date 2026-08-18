@@ -423,9 +423,9 @@ class SDS2104X_plus:
         """
         if self.oscilloscope is None:
             raise ValueError("Oscilloscope is not opened.")
-        #self.ConfigTrigger()
+        self.ConfigTrigger()
         self.ConfigMeasure()
-        #self.ConfigSequence(self.Sequence)
+        self.ConfigSequence(self.Sequence)
         for i, measureParam in enumerate(self.scopeMeasure):
             self.NewMeasure(i+1, measureParam)
 

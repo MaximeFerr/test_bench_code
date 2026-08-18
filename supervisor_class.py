@@ -165,19 +165,23 @@ class Supervisor:
         """
         Setups all devices (DMMs, oscilloscope, microcontroller & power supply).
         """
+        self.microcontroller_setup() #Setup µC before oscilloscope to restart owntech board and avoid errors Need to be tested
+        time.sleep(0.5)
+
+        self.base_oscilloscope.oscilloscope_setup()
+        time.sleep(0.5)
+
+
         self.multimeter_current.dmm_setup_current_testbench()
         time.sleep(0.5)
         self.multimeter_voltage.dmm_setup_voltage_testbench()
         time.sleep(self.multimeter_current.dmm_init_delay) # Wait DMM initialized
         
-        self.base_oscilloscope.oscilloscope_setup()
-        time.sleep(0.5)
+
         
         self.power_supply.setup_hv_power_supply()
         time.sleep(0.5)
         
-        self.microcontroller_setup()
-        time.sleep(0.5)
 
     def close_all_devices(self):
         """

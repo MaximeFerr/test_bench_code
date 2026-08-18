@@ -205,6 +205,7 @@ class SDM3065X:
         """
         self.dmm_send_cmd(self.dmm_for_current, [
             "*RST",
+            "*CLS", #temporary clear status to avoid errors
             "CONF:CURR:DC 0.2",
             "CURR:DC:AZ OFF",
             "TRIG:SOUR EXT;SLOP POS",
@@ -218,6 +219,7 @@ class SDM3065X:
     def dmm_setup_voltage_testbench(self):
         self.dmm_send_cmd(self.dmm_for_voltage, [
             "*RST",
+            "*CLS", #temporary clear status to avoid errors
             "CONF:VOLT:DC 200",
             "VOLT:DC:AZ OFF",
             "TRIG:SOUR EXT;SLOP POS",
