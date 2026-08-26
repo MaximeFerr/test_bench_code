@@ -67,6 +67,7 @@ class Supervisor:
         self.power_supply = tdk_power_supply
         self.microcontroller = None  
 
+        self.base_oscilloscope.result_output_path = self.result_output_path
 
         self.delay = self.config['delay']
         self.delay2 = self.config['delay2']
@@ -165,7 +166,7 @@ class Supervisor:
         """
         Setups all devices (DMMs, oscilloscope, microcontroller & power supply).
         """
-        self.microcontroller_setup() #Setup µC before oscilloscope to restart owntech board and avoid errors Need to be tested
+        self.microcontroller_setup() #Setup µC before oscilloscope to restart owntech board and avoid errors 
         time.sleep(0.5)
 
         self.base_oscilloscope.oscilloscope_setup()

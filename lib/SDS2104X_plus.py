@@ -60,7 +60,7 @@ class SDS2104X_plus:
             self.SaveEachFramePICTURE = config.get('SaveEachFramePICTURE', self.SaveEachFramePICTURE)
             self.SaveEachFrameDATA = config.get('SaveEachFrameDATA', self.SaveEachFrameDATA)
             self.result_output_path = config.get('result_output_path', self.result_output_path)
-            self.scopeMeasure = config.get('scopeMeasure', self.scopeMeasure)
+            self.scopeMeasure = config.get('ScopeAutoMeasure', self.scopeMeasure)
 
         else:
             print(f"Config file not found at {config_path}. Using default parameters.")
